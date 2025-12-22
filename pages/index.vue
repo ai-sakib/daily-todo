@@ -49,7 +49,7 @@
       <!-- Todo Grid -->
       <div v-else-if="todos.length > 0">
         <!-- Grid Layout for Todos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
           <div
             v-for="todo in todos"
             :key="todo.id"
@@ -132,6 +132,18 @@ const todos = ref<DailyTodoWithItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const today = ref(new Date().toISOString().split('T')[0])
+
+// Computed property to sort todos: uncompleted first, completed last
+const sortedTodos = computed(() => {
+  return [...todos.value].sort((a, b) => {
+    // If one is completed and the other isn't, uncompleted comes first
+    if (a.is_completed !== b.is_completed) {
+      return a.is_completed ? 1 : -1
+    }
+    // If both have same completion status, maintain original order
+    return 0
+  })
+})
 
 const formattedDate = computed(() => {
   return new Date().toLocaleDateString('en-US', {
