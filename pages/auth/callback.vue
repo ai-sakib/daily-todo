@@ -8,24 +8,11 @@
 </template>
 
 <script setup lang="ts">
-const supabase = useSupabase()
-const router = useRouter()
+const user = useSupabaseUser() // Use the reactive user object
 
-onMounted(async () => {
-  // Handle the OAuth callback
-  const { data, error } = await supabase.auth.getSession()
-  
-  if (error) {
-    console.error('Auth callback error:', error)
-    router.push('/login')
-    return
+watch(user, (newUser) => {
+  if (newUser) {
+    return navigateTo('/')
   }
-
-  if (data.session) {
-    // Successfully authenticated
-    router.push('/')
-  } else {
-    router.push('/login')
-  }
-})
+}, { immediate: true })
 </script>

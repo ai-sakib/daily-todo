@@ -73,11 +73,11 @@
       <!-- Todo Grid -->
       <div v-else-if="todos.length > 0">
         <!-- Grid Layout for Todos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
           <div
             v-for="todo in todos"
             :key="todo.id"
-            class="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition cursor-pointer"
+            class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition cursor-pointer"
             @click="toggleTodo(todo)"
           >
             <div class="flex items-start gap-3">
@@ -89,7 +89,7 @@
               />
               <div class="flex-1 min-w-0">
                 <span
-                  class="text-sm font-medium block"
+                  class="font-medium block"
                   :class="todo.is_completed ? 'line-through text-gray-400' : 'text-gray-800'"
                 >
                   {{ todo.item_name }}
@@ -151,7 +151,7 @@
 import type { DailyTodoWithItem } from '~/types'
 
 const supabase = useSupabase()
-const { user, signOut } = useSupabaseUser()
+const { user, signOut } = useAuth()
 
 const todos = ref<DailyTodoWithItem[]>([])
 const loading = ref(true)
@@ -319,7 +319,7 @@ const toggleTodo = async (todo: DailyTodoWithItem) => {
 }
 
 onMounted(async () => {
-  await user.value || await useSupabaseUser().fetchUser()
+  await user.value || await useAuth().fetchUser()
   await loadTodos()
 })
 </script>
