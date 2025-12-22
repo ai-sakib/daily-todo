@@ -366,6 +366,7 @@
 import type { TodoItem } from '~/types'
 
 const supabase = useSupabase()
+const { user } = useSupabaseUser()
 
 const items = ref<TodoItem[]>([])
 const loading = ref(true)
@@ -413,9 +414,18 @@ const generateKey = (name: string): string => {
 const loadItems = async () => {
   try {
     loading.value = true
+    
+    // Get current user
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) {
+      navigateTo('/login')
+      return
+    }
+    
     const { data, error } = await supabase
       .from('todo_items')
       .select('*')
+      .eq('user_id', currentUser.id)
       .order('display_order')
 
     if (error) throw error
@@ -431,6 +441,13 @@ const addItem = async () => {
   try {
     isSubmitting.value = true
 
+    // Get current user
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) {
+      showMessage('error', 'You must be logged in')
+      return
+    }
+
     const activeItemsCount = activeItems.value.length
     const maxOrder = activeItemsCount > 0 
       ? Math.max(...activeItems.value.map(i => i.display_order))
@@ -442,7 +459,8 @@ const addItem = async () => {
         item_key: generateKey(newItem.value.name),
         item_name: newItem.value.name,
         is_active: true,
-        display_order: maxOrder + 1
+        display_order: maxOrder + 1,
+        user_id: currentUser.id
       })
 
     if (error) throw error

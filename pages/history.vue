@@ -215,10 +215,18 @@ const loadHistory = async () => {
     loading.value = true
     error.value = null
 
+    // Get current user
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) {
+      navigateTo('/login')
+      return
+    }
+
     // Load all todo items to get names
     const { data: items, error: itemsError } = await supabase
       .from('todo_items')
       .select('*')
+      .eq('user_id', currentUser.id)
 
     if (itemsError) throw itemsError
 
@@ -228,6 +236,7 @@ const loadHistory = async () => {
     let query = supabase
       .from('daily_todos')
       .select('*')
+      .eq('user_id', currentUser.id)
       .order('todo_date', { ascending: false })
 
     if (filters.value.fromDate) {

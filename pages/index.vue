@@ -9,6 +9,21 @@
             <p class="text-sm text-gray-600">{{ formattedDate }}</p>
           </div>
           <div class="flex items-center gap-4">
+            <!-- User Info -->
+            <div v-if="user" class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+              <img 
+                v-if="user.user_metadata?.avatar_url" 
+                :src="user.user_metadata.avatar_url" 
+                :alt="user.user_metadata?.name || 'User'"
+                class="w-8 h-8 rounded-full"
+              />
+              <div v-else class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
+                {{ (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase() }}
+              </div>
+              <span class="text-sm font-medium text-gray-700 hidden md:block">
+                {{ user.user_metadata?.name || user.email }}
+              </span>
+            </div>
             <!-- Progress Badge -->
             <div class="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg">
               <span class="text-sm font-medium text-gray-700">Progress:</span>
@@ -30,6 +45,15 @@
               >
                 Configure
               </NuxtLink>
+              <button
+                @click="handleSignOut"
+                class="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
+                title="Sign Out"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -49,11 +73,11 @@
       <!-- Todo Grid -->
       <div v-else-if="todos.length > 0">
         <!-- Grid Layout for Todos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
           <div
             v-for="todo in todos"
             :key="todo.id"
-            class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition cursor-pointer"
+            class="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition cursor-pointer"
             @click="toggleTodo(todo)"
           >
             <div class="flex items-start gap-3">
@@ -65,7 +89,7 @@
               />
               <div class="flex-1 min-w-0">
                 <span
-                  class="font-medium block"
+                  class="text-sm font-medium block"
                   :class="todo.is_completed ? 'line-through text-gray-400' : 'text-gray-800'"
                 >
                   {{ todo.item_name }}
@@ -127,6 +151,7 @@
 import type { DailyTodoWithItem } from '~/types'
 
 const supabase = useSupabase()
+const { user, signOut } = useSupabaseUser()
 
 const todos = ref<DailyTodoWithItem[]>([])
 const loading = ref(true)
@@ -175,11 +200,19 @@ const loadTodos = async () => {
     loading.value = true
     error.value = null
 
-    // Get active todo items
+    // Get current user
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) {
+      navigateTo('/login')
+      return
+    }
+
+    // Get active todo items for this user
     const { data: items, error: itemsError } = await supabase
       .from('todo_items')
       .select('*')
       .eq('is_active', true)
+      .eq('user_id', currentUser.id)
       .order('display_order')
 
     if (itemsError) throw itemsError
@@ -195,6 +228,7 @@ const loadTodos = async () => {
       .from('daily_todos')
       .select('*')
       .eq('todo_date', today.value)
+      .eq('user_id', currentUser.id)
 
     if (dailyError) throw dailyError
 
@@ -216,7 +250,8 @@ const loadTodos = async () => {
           .insert({
             todo_date: today.value,
             item_key: item.item_key,
-            is_completed: false
+            is_completed: false,
+            user_id: currentUser.id
           })
           .select()
           .single()
@@ -242,6 +277,10 @@ const loadTodos = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleSignOut = async () => {
+  await signOut()
 }
 
 const toggleTodo = async (todo: DailyTodoWithItem) => {
@@ -279,7 +318,8 @@ const toggleTodo = async (todo: DailyTodoWithItem) => {
   }
 }
 
-onMounted(() => {
-  loadTodos()
+onMounted(async () => {
+  await user.value || await useSupabaseUser().fetchUser()
+  await loadTodos()
 })
 </script>
