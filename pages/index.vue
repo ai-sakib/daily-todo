@@ -1,53 +1,62 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4">
     <div class="container mx-auto px-4 max-w-7xl">
-      <!-- Compact Header -->
       <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-        <div class="flex justify-between items-center">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-800">Daily Todos</h1>
-            <p class="text-sm text-gray-600">{{ formattedDate }}</p>
+        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+          
+          <div class="w-full xl:w-auto flex justify-between items-center">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-800">Daily Todos</h1>
+              <p class="text-sm text-gray-600">{{ formattedDate }}</p>
+            </div>
+            <div class="xl:hidden font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full text-sm">
+              {{ Math.round((completedCount / (todos.length || 1)) * 100) }}%
+            </div>
           </div>
-          <div class="flex items-center gap-4">
-            <!-- User Info -->
-            <div v-if="user" class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-              <img 
-                v-if="user.user_metadata?.avatar_url" 
-                :src="user.user_metadata.avatar_url" 
-                :alt="user.user_metadata?.name || 'User'"
-                class="w-8 h-8 rounded-full"
-              />
-              <div v-else class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
-                {{ (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase() }}
+
+          <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:w-auto">
+            
+            <div class="flex flex-row gap-3 overflow-x-auto pb-1 md:pb-0">
+              <div v-if="user" class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg flex-shrink-0">
+                <img 
+                  v-if="user.user_metadata?.avatar_url" 
+                  :src="user.user_metadata.avatar_url" 
+                  :alt="user.user_metadata?.name || 'User'"
+                  class="w-8 h-8 rounded-full"
+                />
+                <div v-else class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
+                  {{ (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase() }}
+                </div>
+                <span class="text-sm font-medium text-gray-700 block max-w-[200px] truncate">
+                  {{ user.user_metadata?.name || user.email }}
+                </span>
               </div>
-              <span class="text-sm font-medium text-gray-700 hidden md:block">
-                {{ user.user_metadata?.name || user.email }}
-              </span>
+
+              <div class="hidden sm:flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg flex-shrink-0">
+                <span class="text-sm font-medium text-gray-700">Progress:</span>
+                <span class="text-lg font-bold text-indigo-600">
+                  {{ completedCount }}/{{ todos.length }}
+                </span>
+                <span class="text-sm text-indigo-600">({{ progressPercentage }}%)</span>
+              </div>
             </div>
-            <!-- Progress Badge -->
-            <div class="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg">
-              <span class="text-sm font-medium text-gray-700">Progress:</span>
-              <span class="text-lg font-bold text-indigo-600">
-                {{ completedCount }}/{{ todos.length }}
-              </span>
-              <span class="text-sm text-indigo-600">({{ progressPercentage }}%)</span>
-            </div>
-            <div class="flex gap-2">
+
+            <div class="grid grid-cols-3 gap-2 w-full md:w-auto">
               <NuxtLink
                 to="/history"
-                class="px-3 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition"
+                class="flex items-center justify-center px-3 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition text-center"
               >
                 History
               </NuxtLink>
               <NuxtLink
                 to="/config"
-                class="px-3 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition"
+                class="flex items-center justify-center px-3 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition text-center"
               >
-                Configure
+                Config
               </NuxtLink>
               <button
                 @click="handleSignOut"
-                class="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
+                class="flex items-center justify-center px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
                 title="Sign Out"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

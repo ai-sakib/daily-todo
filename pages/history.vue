@@ -1,26 +1,24 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
-      <!-- Header -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 class="text-3xl font-bold text-gray-800">Todo History</h1>
-            <p class="text-gray-600 mt-1">View and edit previous days</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Todo History</h1>
+            <p class="text-sm md:text-base text-gray-600 mt-1">View and edit previous days</p>
           </div>
           <NuxtLink
             to="/"
-            class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"
+            class="w-full md:w-auto text-center px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"
           >
             ← Back to Home
           </NuxtLink>
         </div>
       </div>
 
-      <!-- Date Filter -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <div class="flex flex-wrap gap-4 items-end">
-          <div class="flex-1 min-w-[200px]">
+        <div class="flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-end">
+          <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-1">
               From Date
             </label>
@@ -30,7 +28,7 @@
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-          <div class="flex-1 min-w-[200px]">
+          <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-1">
               To Date
             </label>
@@ -40,18 +38,20 @@
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-          <button
-            @click="loadHistory"
-            class="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"
-          >
-            Load History
-          </button>
-          <button
-            @click="resetFilters"
-            class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
-          >
-            Reset
-          </button>
+          <div class="flex flex-col sm:flex-row gap-2 mt-2 md:mt-0">
+             <button
+              @click="loadHistory"
+              class="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition text-center"
+            >
+              Load
+            </button>
+            <button
+              @click="resetFilters"
+              class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition text-center"
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 
