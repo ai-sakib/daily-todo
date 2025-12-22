@@ -151,7 +151,7 @@
 import type { DailyTodoWithItem } from '~/types'
 
 const supabase = useSupabase()
-const { user, signOut } = useSupabaseUser()
+const { user, signOut } = useAuth()
 
 const todos = ref<DailyTodoWithItem[]>([])
 const loading = ref(true)
@@ -319,7 +319,7 @@ const toggleTodo = async (todo: DailyTodoWithItem) => {
 }
 
 onMounted(async () => {
-  await user.value || await useSupabaseUser().fetchUser()
+  await user.value || await useAuth().fetchUser()
   await loadTodos()
 })
 </script>

@@ -1,24 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
+// composables/useSupabase.ts
 
 export const useSupabase = () => {
-  const config = useRuntimeConfig()
-  
-  const supabase = createClient(
-    config.public.supabaseUrl as string,
-    config.public.supabaseKey as string
-  )
-
-  return supabase
+  return useSupabaseClient()
 }
 
-export const useSupabaseUser = () => {
-  const supabase = useSupabase()
-  const user = useState('supabase_user', () => null)
+// RENAME this from useSupabaseUser to useAuth
+export const useAuth = () => {
+  const supabase = useSupabaseClient()
+  
+  // This uses the module's internal user state (synced via cookies automatically)
+  const user = useSupabaseUser() 
 
+  // fetchUser is largely redundant with the new module (cookies handle it), 
+  // but we keep it here for compatibility with your code.
   const fetchUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    user.value = authUser
-    return authUser
+    const { data } = await supabase.auth.getUser()
+    return data.user
   }
 
   const signInWithGoogle = async () => {
@@ -34,7 +31,6 @@ export const useSupabaseUser = () => {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     if (!error) {
-      user.value = null
       navigateTo('/login')
     }
     return { error }

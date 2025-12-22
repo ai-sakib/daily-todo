@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-const { signInWithGoogle } = useSupabaseUser()
+const { signInWithGoogle } = useAuth()
 const loading = ref(false)
 const error = ref<string | null>(null)
 
