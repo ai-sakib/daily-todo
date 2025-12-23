@@ -98,7 +98,7 @@
                 @dragend="handleDragEnd"
                 @dragover.prevent="handleDragOverItem($event, item, index, true)"
                 @drop.prevent="handleDropOnItem($event, item, index, true)"
-                class="relative border-2 rounded-lg p-4 transition-all duration-200"
+                class="relative border-2 rounded-lg p-2 transition-all duration-200"
                 :class="{
                   'opacity-40 scale-95': draggedItem?.id === item.id,
                   'border-gray-200 hover:border-indigo-300 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': draggedItem?.id !== item.id && editingId !== item.id,
@@ -136,7 +136,7 @@
                   </div>
                 </div>
 
-                <div v-else class="flex items-center gap-3">
+                <div v-else class="flex items-center gap-2">
                   <!-- Drag Handle -->
                   <!-- <div class="flex flex-col gap-1 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0">
                     <div class="flex gap-1">
@@ -151,7 +151,7 @@
                   </div> -->
 
                   <!-- Priority Badge -->
-                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  <div class="flex-shrink-0 w-7 h-7 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                     {{ index + 1 }}
                   </div>
 
@@ -164,7 +164,7 @@
                   <div class="flex items-center gap-2 flex-shrink-0">
                     <button
                       @click="startEdit(item)"
-                      class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-sm"
+                      class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-sm"
                       title="Edit"
                     >
                       ✏️
@@ -172,7 +172,7 @@
                     
                     <button
                       @click="toggleActive(item)"
-                      class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
+                      class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
                       title="Move to Inactive"
                     >
                       →
@@ -180,7 +180,7 @@
                     
                     <button
                       @click="deleteItem(item)"
-                      class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+                      class="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
                       title="Delete"
                     >
                       🗑️
@@ -243,7 +243,7 @@
                 @dragend="handleDragEnd"
                 @dragover.prevent="handleDragOverItem($event, item, index, false)"
                 @drop.prevent="handleDropOnItem($event, item, index, false)"
-                class="relative border-2 rounded-lg p-4 transition-all duration-200 opacity-75 hover:opacity-100"
+                class="relative border-2 rounded-lg p-2 transition-all duration-200 opacity-75 hover:opacity-100"
                 :class="{
                   'opacity-20 scale-95': draggedItem?.id === item.id,
                   'border-gray-200 hover:border-gray-400 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': draggedItem?.id !== item.id && editingId !== item.id,
@@ -281,7 +281,7 @@
                   </div>
                 </div>
 
-                <div v-else class="flex items-center gap-3">
+                <div v-else class="flex items-center gap-2">
                   <!-- Drag Handle -->
                   <!-- <div class="flex flex-col gap-1 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0">
                     <div class="flex gap-1">
@@ -296,7 +296,7 @@
                   </div> -->
 
                   <!-- Priority Badge -->
-                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  <div class="flex-shrink-0 w-7 h-7 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                     {{ index + 1 }}
                   </div>
 
@@ -309,7 +309,7 @@
                   <div class="flex items-center gap-2 flex-shrink-0">
                     <button
                       @click="startEdit(item)"
-                      class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
+                      class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
                       title="Edit"
                     >
                       ✏️
@@ -317,7 +317,7 @@
                     
                     <button
                       @click="toggleActive(item)"
-                      class="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm"
+                      class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm"
                       title="Move to Active"
                     >
                       ←
@@ -325,7 +325,7 @@
                     
                     <button
                       @click="deleteItem(item)"
-                      class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+                      class="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
                       title="Delete"
                     >
                       🗑️
