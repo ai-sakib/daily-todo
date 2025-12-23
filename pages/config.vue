@@ -138,20 +138,17 @@
 
                 <div v-else class="flex items-center gap-3">
                   <!-- Drag Handle -->
-                  <div class="flex flex-col gap-1 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                  <!-- <div class="flex flex-col gap-1 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0">
                     <div class="flex gap-1">
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <div class="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
                     <div class="flex gap-1">
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <div class="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
                     <div class="flex gap-1">
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <div class="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
-                  </div>
+                  </div> -->
 
                   <!-- Priority Badge -->
                   <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
@@ -286,19 +283,21 @@
 
                 <div v-else class="flex items-center gap-3">
                   <!-- Drag Handle -->
-                  <div class="flex flex-col gap-1 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                  <!-- <div class="flex flex-col gap-1 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0">
                     <div class="flex gap-1">
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <div class="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
                     <div class="flex gap-1">
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <div class="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
                     <div class="flex gap-1">
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                      <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <div class="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
+                  </div> -->
+
+                  <!-- Priority Badge -->
+                  <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    {{ index + 1 }}
                   </div>
 
                   <!-- Item Info -->
