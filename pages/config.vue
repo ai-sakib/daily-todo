@@ -34,9 +34,19 @@
         </div>
       </div>
 
-      <div v-if="message" class="mb-6 p-4 rounded-lg" :class="message.type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' : 'bg-green-50 text-green-800 border border-green-200'">
-        {{ message.text }}
-      </div>
+      <Transition name="fade">
+        <div v-if="message" 
+          class="fixed top-5 right-5 z-[100] max-w-sm w-full shadow-2xl rounded-lg border p-4 flex items-start gap-3 animate-in slide-in-from-right-5 duration-300"
+          :class="message.type === 'error' ? 'bg-red-50 text-red-800 border-red-200' : 'bg-green-50 text-green-800 border-green-200'"
+        >
+          <div class="flex-1">
+            <p class="text-sm font-medium">{{ message.text }}</p>
+          </div>
+          <button @click="message = null" class="text-gray-400 hover:text-gray-600 transition">
+            <span class="text-xl leading-none">×</span>
+          </button>
+        </div>
+      </Transition>
 
       <div v-if="activeTab === 'general'">
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -405,11 +415,6 @@ const inactiveItems = computed(() =>
 
 // ================= HELPER FUNCTIONS =================
 
-const showMessage = (type: 'success' | 'error', text: string) => {
-  message.value = { type, text }
-  setTimeout(() => { message.value = null }, 3000)
-}
-
 const generateKey = (name: string): string => {
   return name.toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
@@ -697,6 +702,20 @@ const shiftDate = (days: number) => {
   loadDateTodos() // Trigger the load/sync logic
 }
 
+let messageTimeout: NodeJS.Timeout | null = null
+
+const showMessage = (type: 'success' | 'error', text: string) => {
+  // Clear any existing timer
+  if (messageTimeout) clearTimeout(messageTimeout)
+  
+  message.value = { type, text }
+  
+  // Set auto-hide timer for 4 seconds
+  messageTimeout = setTimeout(() => {
+    message.value = null
+  }, 4000)
+}
+
 watch(activeTab, (newTab) => {
   if (newTab === 'custom') {
     // Only load if we have a date selected, otherwise default to tomorrow logic inside the function or here
@@ -712,3 +731,20 @@ onMounted(() => {
    loadItems()
 })
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+</style>
