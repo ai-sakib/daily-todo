@@ -52,7 +52,7 @@
                 to="/config"
                 class="flex items-center justify-center px-3 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition text-center"
               >
-                Add Todo
+                Add/Edit Todo
               </NuxtLink>
               <button
                 @click="handleSignOut"

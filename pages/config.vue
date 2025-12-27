@@ -525,11 +525,61 @@ const toggleActive = async (item: TodoItem) => {
 const startEdit = (item: TodoItem) => { editingId.value = item.id; editForm.value = { name: item.item_name } }
 const cancelEdit = () => { editingId.value = null; editForm.value = { name: '' } }
 const saveEdit = async (itemId: string) => {
-  try { const { error } = await supabase.from('todo_items').update({ item_name: editForm.value.name }).eq('id', itemId); if (error) throw error; showMessage('success', 'Item updated!'); editingId.value = null; await loadItems() } catch (err: any) { showMessage('error', err.message || 'Failed to update') }
+  try {
+    // 1. Get the old item to know what name to search for in daily_todos
+    const oldItem = items.value.find(i => i.id === itemId)
+    const oldName = oldItem?.item_name
+    const newName = editForm.value.name
+
+    // 2. Update the general configuration list
+    const { error: itemError } = await supabase
+      .from('todo_items')
+      .update({ item_name: newName })
+      .eq('id', itemId)
+
+    if (itemError) throw itemError
+
+    // 3. Update all daily_todos that match the old name
+    if (oldName) {
+      await supabase
+        .from('daily_todos')
+        .update({ item_name: newName })
+        .eq('item_name', oldName)
+    }
+
+    showMessage('success', 'Item updated everywhere!')
+    editingId.value = null
+    await loadItems()
+  } catch (err: any) {
+    showMessage('error', err.message || 'Failed to update')
+  }
 }
+
 const deleteItem = async (item: TodoItem) => {
-  if (!confirm(`Are you sure you want to delete "${item.item_name}"?`)) return
-  try { const { error } = await supabase.from('todo_items').delete().eq('id', item.id); if (error) throw error; showMessage('success', 'Item deleted!'); await loadItems() } catch (err: any) { showMessage('error', err.message || 'Failed to delete') }
+  if (!confirm(`Are you sure? This will also delete "${item.item_name}" from all daily records and history.`)) return
+  
+  try {
+    // 1. Delete from the general configuration list
+    const { error: itemError } = await supabase
+      .from('todo_items')
+      .delete()
+      .eq('id', item.id)
+
+    if (itemError) throw itemError
+
+    // 2. Delete from all daily_todos with the same name
+    const { error: dailyError } = await supabase
+      .from('daily_todos')
+      .delete()
+      .eq('item_name', item.item_name)
+
+    if (dailyError) throw dailyError
+
+    showMessage('success', 'Item removed from configuration and history!')
+    await loadItems()
+  } catch (err: any) {
+    showMessage('error', err.message || 'Failed to delete')
+  }
 }
 
 // ================= DATE SPECIFIC LOGIC =================
