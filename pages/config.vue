@@ -112,7 +112,7 @@
                   @dragend="handleDragEnd"
                   @dragover.prevent="handleDragOverItem($event, item, index, true)"
                   @drop.prevent="handleDropOnItem($event, item, index, true)"
-                  class="relative border-2 rounded-lg p-2 transition-all duration-200"
+                  class="relative border rounded-lg px-2 py-1.5 transition-all duration-200"
                   :class="{
                     'opacity-40 scale-95': draggedItem?.id === item.id,
                     'border-gray-200 hover:border-indigo-300 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': draggedItem?.id !== item.id && editingId !== item.id,
@@ -148,11 +148,7 @@
                     </div>
                   </div>
 
-                  <div v-else class="flex items-center gap-2">
-                    <div class="flex-shrink-0 w-7 h-7 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      {{ index + 1 }}
-                    </div>
-
+                  <div v-else class="px-2 py-1 flex items-center gap-2">
                     <div class="flex-1 min-w-0">
                       <h3 @click="startEdit(item)" class="font-semibold text-gray-800 truncate cursor-pointer hover:text-indigo-600">{{ item.item_name }}</h3>
                     </div>
@@ -160,7 +156,7 @@
                     <div class="flex items-center gap-2 flex-shrink-0">
                       <button
                         @click="toggleActive(item)"
-                        class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
+                        class="w-7 h-7 px-2 py-1 text-gray-700 rounded-full hover:bg-gray-200 transition text-sm"
                         title="Move to Inactive"
                       >
                         →
@@ -168,11 +164,7 @@
                       
                       <button
                         @click="deleteItem(item)"
-                        class="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
+                        class="w-7 h-7 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition" title="Delete">✕</button>
                     </div>
                   </div>
                 </div>
@@ -229,7 +221,7 @@
                   @dragend="handleDragEnd"
                   @dragover.prevent="handleDragOverItem($event, item, index, false)"
                   @drop.prevent="handleDropOnItem($event, item, index, false)"
-                  class="relative border-2 rounded-lg p-2 transition-all duration-200 opacity-75 hover:opacity-100"
+                  class="relative border rounded-lg px-2 py-1.5 transition-all duration-200 opacity-75 hover:opacity-100"
                   :class="{
                     'opacity-20 scale-95': draggedItem?.id === item.id,
                     'border-gray-200 hover:border-gray-400 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': draggedItem?.id !== item.id && editingId !== item.id,
@@ -255,16 +247,13 @@
                     </div>
                   </div>
 
-                  <div v-else class="flex items-center gap-2">
-                    <div class="flex-shrink-0 w-7 h-7 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      {{ index + 1 }}
-                    </div>
+                  <div v-else class="px-2 py-1 flex items-center gap-2">
                     <div class="flex-1 min-w-0">
                       <h3 @click="startEdit(item)" class="font-semibold text-gray-600 truncate cursor-pointer">{{ item.item_name }}</h3>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                      <button @click="toggleActive(item)" class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm" title="Move to Active">←</button>
-                      <button @click="deleteItem(item)" class="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm" title="Delete">🗑️</button>
+                      <button @click="toggleActive(item)" class="w-7 h-7 text-green-700 rounded-full hover:bg-green-200 transition text-sm" title="Move to Active">←</button>
+                      <button @click="deleteItem(item)" class="w-7 h-7 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition" title="Delete">✕</button>
                     </div>
                   </div>
                 </div>
@@ -286,26 +275,44 @@
            <div class="flex flex-col sm:flex-row gap-4 items-end mb-6">
             <div class="flex-1 w-full">
               <label class="block text-sm font-medium text-gray-700 mb-1">Select Date</label>
-              <input 
-                v-model="selectedDate" 
-                type="date" 
-                :min="today"
-                @change="loadDateTodos"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              />
+              <div class="flex items-center gap-2">
+                <button 
+                  @click="shiftDate(-1)"
+                  :disabled="isPrevDisabled"
+                  class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  title="Previous Day"
+                >
+                  <span class="text-xl">‹</span>
+                </button>
+
+                <input 
+                  v-model="selectedDate" 
+                  type="date" 
+                  :min="todayStr"
+                  @change="loadDateTodos"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+
+                <button 
+                  @click="shiftDate(1)"
+                  class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition"
+                  title="Next Day"
+                >
+                  <span class="text-xl">›</span>
+                </button>
+              </div>
             </div>
             
             <button
-               v-if="selectedDate"
-               @click="syncGeneralItems"
-               :disabled="isSyncing"
-               class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition flex items-center gap-2 whitespace-nowrap"
+              v-if="selectedDate"
+              @click="syncGeneralItems"
+              :disabled="isSyncing"
+              class="w-full sm:w-auto px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition flex items-center gap-2 whitespace-nowrap"
             >
-               <span v-if="isSyncing" class="animate-spin">↻</span>
-               <span v-else>↻</span>
-               Sync General Items
+              <span>↻</span>
+              Sync General Items
             </button>
-           </div>
+          </div>
            
            <div class="text-sm text-gray-500 mb-6 bg-blue-50 p-3 rounded-lg border border-blue-100">
                <p><strong>How it works:</strong> Changes here only affect this specific date.</p>
@@ -316,25 +323,32 @@
                </ul>
            </div>
 
-           <div class="border-t border-gray-100 pt-6">
-              <h3 class="text-lg font-semibold text-gray-800 mb-3">Add Item for {{ formattedSelectedDate }}</h3>
-              <form @submit.prevent="addDateSpecificItem" class="flex gap-3">
+          <div class="border-t border-gray-100 pt-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">
+              Add Item for <span class="block sm:inline text-indigo-600 sm:text-gray-800">{{ formattedSelectedDate }}</span>
+            </h3>
+            
+            <form @submit.prevent="addDateSpecificItem" class="flex flex-col sm:flex-row gap-3">
+              <div class="flex-1">
                 <input
                   v-model="newDateItem.name"
                   type="text"
                   required
                   placeholder="e.g., Special Doctor Appointment"
-                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  class="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-base"
                 />
-                <button
-                  type="submit"
-                  :disabled="isSubmitting"
-                  class="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition disabled:bg-gray-400 font-medium whitespace-nowrap"
-                >
-                  {{ isSubmitting ? 'Adding...' : '+ Add to Date' }}
-                </button>
-              </form>
-           </div>
+              </div>
+              
+              <button
+                type="submit"
+                :disabled="isSubmitting"
+                class="w-full sm:w-auto px-6 py-3 sm:py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition disabled:bg-gray-400 font-medium whitespace-nowrap shadow-sm active:transform active:scale-95"
+              >
+                <span v-if="isSubmitting">Adding...</span>
+                <span v-else>+ Add to Date</span>
+              </button>
+            </form>
+          </div>
         </div>
 
         <div v-if="loadingDateItems" class="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -355,7 +369,7 @@
               <div 
                 v-for="item in dateSpecificTodos" 
                 :key="item.id"
-                class="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-shadow bg-white border-gray-200"
+                class="flex items-center justify-between px-3 py-2 border rounded-lg hover:shadow-sm transition-shadow bg-white border-gray-200"
               > 
                 <div v-if="editingDateItemId === item.id" class="flex-1 flex gap-2 mr-2">
                    <input
@@ -368,20 +382,13 @@
                 </div>
 
                 <div v-else class="flex items-center gap-3 flex-1 min-w-0">
-                   <span class="font-medium text-gray-800 truncate">{{ item.item_name }}</span>
+                   <span @click="startDateItemEdit(item)" class="hover:cursor-pointer font-medium text-gray-800 truncate">{{ item.item_name }}</span>
                 </div>
 
                 <div v-if="editingDateItemId !== item.id" class="flex items-center gap-2">
                    <button 
-                      @click="startDateItemEdit(item)"
-                      class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition"
-                      title="Edit for this date"
-                   >
-                      ✎
-                   </button>
-                   <button 
                       @click="deleteDateItem(item)"
-                      class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition"
+                      class="w-7 h-7 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition"
                       title="Remove from this date"
                    >
                       ✕
@@ -608,8 +615,9 @@ const deleteItem = async (item: TodoItem) => {
 
 const syncGeneralItems = async () => {
   if (!selectedDate.value) return
+  loadingDateItems.value = true
   isSyncing.value = true
-  
+
   try {
     const { data: { user: currentUser } } = await supabase.auth.getUser()
     if (!currentUser) return
@@ -663,6 +671,7 @@ const syncGeneralItems = async () => {
     console.error(err)
   } finally {
     isSyncing.value = false
+    loadingDateItems.value = false
   }
 }
 
@@ -695,8 +704,6 @@ const loadDateTodos = async () => {
         .maybeSingle()
     
      const isInitialized = statusData?.is_initialized
-
-     console.log('isInitialized', isInitialized)
 
      if (!isInitialized) {
         // First time visiting this date! Run sync automatically
@@ -792,11 +799,36 @@ const deleteDateItem = async (item: DailyTodo) => {
    }
 }
 
+// Helper for date string formatting (YYYY-MM-DD)
+const todayStr = computed(() => new Date().toISOString().split('T')[0])
+
+// Disable prev if selectedDate is today or earlier
+const isPrevDisabled = computed(() => {
+  if (!selectedDate.value) return true
+  return selectedDate.value <= todayStr.value
+})
+
+// Function to move date forward or backward
+const shiftDate = (days: number) => {
+  if (!selectedDate.value) return
+  
+  const current = new Date(selectedDate.value)
+  current.setDate(current.getDate() + days)
+  
+  const newDateStr = current.toISOString().split('T')[0]
+  
+  // Prevent going before today
+  if (newDateStr < todayStr.value) return
+  
+  selectedDate.value = newDateStr
+  loadDateTodos() // Trigger the load/sync logic
+}
+
 watch(activeTab, (newTab) => {
   if (newTab === 'custom') {
     // Only load if we have a date selected, otherwise default to tomorrow logic inside the function or here
     if (!selectedDate.value) {
-       selectedDate.value = new Date().toISOString().split('T')[0]
+       selectedDate.value = todayStr.value
     }
 
     loadDateTodos()
@@ -804,7 +836,6 @@ watch(activeTab, (newTab) => {
 })
 
 onMounted(() => {
-   selectedDate.value = new Date().toISOString().split('T')[0]
    loadItems()
 })
 </script>
