@@ -157,18 +157,18 @@
 
                   <!-- Item Info -->
                   <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-800 truncate">{{ item.item_name }}</h3>
+                    <h3 @click="startEdit(item)" class="font-semibold text-gray-800 truncate">{{ item.item_name }}</h3>
                   </div>
 
                   <!-- Actions -->
                   <div class="flex items-center gap-2 flex-shrink-0">
-                    <button
+                    <!-- <button
                       @click="startEdit(item)"
                       class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-sm"
                       title="Edit"
                     >
                       ✏️
-                    </button>
+                    </button> -->
                     
                     <button
                       @click="toggleActive(item)"
@@ -302,18 +302,18 @@
 
                   <!-- Item Info -->
                   <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-600 truncate">{{ item.item_name }}</h3>
+                    <h3 @click="startEdit(item)" class="font-semibold text-gray-600 truncate">{{ item.item_name }}</h3>
                   </div>
 
                   <!-- Actions -->
                   <div class="flex items-center gap-2 flex-shrink-0">
-                    <button
+                    <!-- <button
                       @click="startEdit(item)"
                       class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
                       title="Edit"
                     >
                       ✏️
-                    </button>
+                    </button> -->
                     
                     <button
                       @click="toggleActive(item)"
