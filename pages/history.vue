@@ -98,28 +98,41 @@
             <div
               v-for="todo in todos"
               :key="todo.id"
-              class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition"
+              class="flex items-center justify-between border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition group"
             >
-              <label class="flex items-center cursor-pointer group">
+              <label class="flex items-center cursor-pointer flex-1 min-w-0">
                 <input
                   type="checkbox"
                   :checked="todo.is_completed"
                   @change="toggleHistoryTodo(todo, date)"
                   class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
                 />
-                <span
-                  class="ml-3 text-base flex-1"
-                  :class="todo.is_completed ? 'line-through text-gray-400' : 'text-gray-800 font-medium'"
-                >
-                  {{ todo.item_name }}
-                </span>
-                <span
-                  v-if="todo.is_completed && todo.completed_at"
-                  class="text-sm text-green-600"
-                >
+                <div class="ml-3 flex-1 min-w-0">
+                  <p
+                    class="text-base truncate"
+                    :class="todo.is_completed ? 'line-through text-gray-400' : 'text-gray-800 font-medium'"
+                  >
+                    {{ todo.item_name }}
+                  </p>
+                  <p v-if="todo.is_completed && todo.completed_at" class="text-xs text-green-600 sm:hidden">
+                    ✓ {{ formatTime(todo.completed_at) }}
+                  </p>
+                </div>
+              </label>
+
+              <div class="flex items-center gap-3 ml-4">
+                <span v-if="todo.is_completed && todo.completed_at" class="hidden sm:inline text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
                   ✓ {{ formatTime(todo.completed_at) }}
                 </span>
-              </label>
+                
+                <button 
+                  @click="deleteHistoryTodo(todo, date)"
+                  class="w-7 h-7 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition"
+                  title="Delete from history"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -305,6 +318,31 @@ const toggleHistoryTodo = async (todo: DailyTodoWithItem, date: string) => {
 const resetFilters = () => {
   initializeDates()
   loadHistory()
+}
+
+const deleteHistoryTodo = async (todo: DailyTodoWithItem, date: string) => {
+  if (!confirm(`Permanently delete "${todo.item_name}" from history for ${date}?`)) return
+  
+  try {
+    const { error: deleteError } = await supabase
+      .from('daily_todos')
+      .delete()
+      .eq('id', todo.id)
+
+    if (deleteError) throw deleteError
+
+    // Remove from local state immediately
+    groupedHistory.value[date] = groupedHistory.value[date].filter(t => t.id !== todo.id)
+    
+    // If no todos left for that specific date, remove the date block entirely
+    if (groupedHistory.value[date].length === 0) {
+      delete groupedHistory.value[date]
+    }
+    
+  } catch (err: any) {
+    alert(err.message || 'Failed to delete')
+    console.error('Error deleting todo:', err)
+  }
 }
 
 onMounted(() => {
