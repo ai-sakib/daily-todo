@@ -131,7 +131,40 @@
               {{ completedCount }} of {{ todos.length }} completed
             </span>
             <span v-if="completedCount === todos.length" class="text-sm font-semibold text-green-600">
-              🎉 All done!
+              <Transition name="celebrate">
+                <div v-if="showCelebration" 
+                    class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none overflow-hidden">
+                  
+                  <div class="absolute inset-0 bg-indigo-500/10 backdrop-blur-[2px] animate-pulse pointer-events-auto" @click="showCelebration = false"></div>
+
+                  <div class="relative bg-white/90 backdrop-blur-md p-10 rounded-[2rem] shadow-[0_20px_50px_rgba(99,102,241,0.3)] border border-white flex flex-col items-center transform transition-all duration-700 pointer-events-auto">
+                    
+                    <!-- <button 
+                      @click="showCelebration = false"
+                      class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-2"
+                    >
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button> -->
+
+                    <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                    
+                    <h2 class="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 pb-2 tracking-tight">
+                      COMPLETED!
+                    </h2>
+                    
+                    <div class="h-1 w-24 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full mb-4"></div>
+                    
+                    <p class="text-gray-600 font-medium text-lg text-center w-full max-w-[280px] sm:max-w-md mx-auto break-words px-2">
+                      {{ currentPhrase }}
+                    </p>
+                    
+                    <div class="absolute -top-4 -right-4 w-12 h-12 bg-yellow-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                    <div class="absolute -bottom-4 -left-4 w-12 h-12 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                  </div>
+                </div>
+              </Transition>
             </span>
             <span v-else class="text-sm text-gray-500">
               {{ todos.length - completedCount }} remaining
@@ -157,6 +190,7 @@
 </template>
 
 <script setup lang="ts">
+import confetti from 'canvas-confetti'
 import type { DailyTodoWithItem } from '~/types'
 
 const supabase = useSupabase()
@@ -166,6 +200,37 @@ const todos = ref<DailyTodoWithItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const today = ref(new Date().toLocaleDateString('en-CA'))
+const showCelebration = ref(false)
+const celebrationPhrases = [
+  "🏆 TASKS: ABSOLUTELY CRUSHED",
+  "🎊 THE DEED IS DONE (LEGENDARY)",
+  "🚀 ENERGY: DEPLETED",
+  "🔥 CALL THE FIRE DEPARTMENT, YOU'RE ON FIRE!",
+  "💎 PURE PRODUCTIVITY POISON",
+  "🌈 THE TO-DO LIST IS CRYING NOW",
+  "👑 ABSOLUTE KING/QUEEN OF DONE",
+  "🎯 BULLSEYE! NO PRISONERS TAKEN",
+  "🦾 PRODUCTIVITY LEVEL: CYBORG",
+  "🛸 BEAM ME UP, TASKS ARE FINISHED",
+  "🕺 VIBE: UNSTOPPABLE",
+  "⚡ 1.21 GIGAWATTS OF PURE EXECUTION",
+  "🥂 THE TO-DO LIST HAS LEFT THE CHAT",
+  "🌟 BRIGHTER THAN A SUPERNOVA",
+  "🛑 STOP! YOU’RE TOO POWERFUL",
+  "🍄 POWER-UP ACQUIRED: DAY COMPLETE",
+  "🍕 TO-DO LIST: EATEN FOR BREAKFAST",
+  "🧘 ZEN LEVEL: MAXIMUM (TASKS ZERO)",
+  "🧠 BRAIN STATUS: 100% RELAX MODE",
+  "🎬 THAT’S A WRAP! NO RE-TAKES",
+  "🌋 BOOM! TASK-CANO ERUPTION",
+  "🏄‍♂️ RIDING THE WAVE OF SUCCESS",
+  "🏴‍☠️ BOUNTY COLLECTED: ALL DONE",
+  "🦄 LEGENDARY STREAK: UNLOCKED",
+  "🧨 TASKS? GONE. REDUCED TO ATOMS",
+  "⚔️ BOSS BATTLE: WON (TASKS DEFEATED)"
+]
+
+const currentPhrase = ref("")
 
 // Computed property to sort todos: uncompleted first, completed last
 const sortedTodos = computed(() => {
@@ -218,8 +283,6 @@ const loadTodos = async () => {
       navigateTo('/login')
       return
     }
-
-    
 
     // Get or create daily todos for today
     const { data: dailyTodos, error: dailyError } = await supabase
@@ -315,6 +378,10 @@ const toggleTodo = async (todo: DailyTodoWithItem) => {
       todos.value[index].completed_at = newCompletedState ? new Date().toISOString() : null
     }
 
+    if (newCompletedState && todos.value.every(t => t.is_completed)) {
+      triggerCelebration()
+    }
+
     // Update database in background
 
     const now = new Date().toISOString()
@@ -342,8 +409,90 @@ const toggleTodo = async (todo: DailyTodoWithItem) => {
   }
 }
 
+const triggerCelebration = () => {
+  const randomIndex = Math.floor(Math.random() * celebrationPhrases.length)
+  currentPhrase.value = celebrationPhrases[randomIndex]
+  
+  showCelebration.value = true
+  
+  // Confetti Logic
+  const end = Date.now() + 3 * 1000;
+  const colors = ['#6366f1', '#a855f7', '#ec4899'];
+
+  (function frame() {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.6 },
+      colors: colors
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.6 },
+      colors: colors
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  }());
+}
+
 onMounted(async () => {
   await user.value || await useAuth().fetchUser()
   await loadTodos()
+
+  if (todos.value.length > 0 && todos.value.every(t => t.is_completed)) {
+    triggerCelebration()
+  }
 })
 </script>
+
+<style scoped>
+/* Celebration Transitions */
+.celebrate-enter-active {
+  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.celebrate-leave-active {
+  transition: all 0.5s ease-in;
+}
+.celebrate-enter-from {
+  opacity: 0;
+  transform: scale(0.5) translateY(100px);
+}
+.celebrate-leave-to {
+  opacity: 0;
+  transform: scale(1.2);
+}
+.animate-blob {
+  animation: blob 7s infinite;
+}
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.text-lg {
+  animation: spring-up 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Blob Animation for the background glow */
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .8; transform: scale(1.05); }
+}
+@keyframes spring-up {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
