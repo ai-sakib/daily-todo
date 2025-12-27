@@ -359,7 +359,6 @@ interface DailyTodo {
 }
 
 const supabase = useSupabase()
-const { user } = useSupabaseUser()
 
 // TABS STATE
 const activeTab = ref<'general' | 'custom'>('general')
@@ -429,7 +428,7 @@ const loadItems = async () => {
       .from('todo_items')
       .select('*')
       .eq('user_id', currentUser.id)
-      .order('display_order')
+      .order('created_at')
 
     if (error) throw error
     items.value = data || []
@@ -556,6 +555,7 @@ const loadDateTodosOnly = async () => {
       .select('*')
       .eq('user_id', currentUser.id)
       .eq('todo_date', selectedDate.value)
+      .order('created_at')
     if (error) throw error
     dateSpecificTodos.value = data || []
 }
