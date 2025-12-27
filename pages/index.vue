@@ -216,6 +216,23 @@ const loadTodos = async () => {
       return
     }
 
+    
+
+    // Get or create daily todos for today
+    const { data: dailyTodos, error: dailyError } = await supabase
+      .from('daily_todos')
+      .select('*')
+      .eq('todo_date', today.value)
+      .eq('user_id', currentUser.id)
+
+    if (dailyError) throw dailyError
+
+    if (dailyTodos.length > 0) {
+      todos.value = dailyTodos
+      return
+    }
+
+
     // Get active todo items for this user
     const { data: items, error: itemsError } = await supabase
       .from('todo_items')
@@ -231,15 +248,6 @@ const loadTodos = async () => {
       loading.value = false
       return
     }
-
-    // Get or create daily todos for today
-    const { data: dailyTodos, error: dailyError } = await supabase
-      .from('daily_todos')
-      .select('*')
-      .eq('todo_date', today.value)
-      .eq('user_id', currentUser.id)
-
-    if (dailyError) throw dailyError
 
     // Create a map of existing daily todos
     const dailyTodoMap = new Map(

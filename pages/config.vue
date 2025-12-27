@@ -268,8 +268,8 @@
                     </div>
                   </div>
                 </div>
-                
-                 <div
+
+                <div
                   v-if="dropTargetIndex === inactiveItems.length && dropTargetSection === 'inactive'"
                   class="h-12 border-2 border-dashed border-gray-400 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 text-sm"
                 >
@@ -289,14 +289,31 @@
               <input 
                 v-model="selectedDate" 
                 type="date" 
-                :min="tomorrow"
+                :min="today"
                 @change="loadDateTodos"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <div class="text-sm text-gray-500 mb-2">
-               Selecting a date allows you to add specific items or override general items for that day.
-            </div>
+            
+            <button
+               v-if="selectedDate"
+               @click="syncGeneralItems"
+               :disabled="isSyncing"
+               class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition flex items-center gap-2 whitespace-nowrap"
+            >
+               <span v-if="isSyncing" class="animate-spin">↻</span>
+               <span v-else>↻</span>
+               Sync General Items
+            </button>
+           </div>
+           
+           <div class="text-sm text-gray-500 mb-6 bg-blue-50 p-3 rounded-lg border border-blue-100">
+               <p><strong>How it works:</strong> Changes here only affect this specific date.</p>
+               <ul class="list-disc ml-4 mt-1 space-y-1">
+                   <li>If this is your first time visiting this date, we automatically copied your General items.</li>
+                   <li>You can delete items here without affecting the main list.</li>
+                   <li>Click "Sync General Items" to fetch any new items you added to the General list later.</li>
+               </ul>
            </div>
 
            <div class="border-t border-gray-100 pt-6">
@@ -328,19 +345,19 @@
         <div v-else class="bg-white rounded-lg shadow-lg p-6">
            <h2 class="text-xl font-semibold text-gray-800 mb-4">Todo List for {{ formattedSelectedDate }}</h2>
            
-           <div v-if="dateSpecificList.length === 0" class="text-center py-10 text-gray-500">
+           <div v-if="dateSpecificTodos.length === 0" class="text-center py-10 text-gray-500">
               <div class="text-4xl mb-2">📅</div>
               <p>No items scheduled for this date.</p>
+              <button @click="syncGeneralItems" class="text-indigo-600 hover:underline mt-2 text-sm">Sync from General List</button>
            </div>
 
            <div v-else class="space-y-3">
               <div 
-                v-for="item in dateSpecificList" 
-                :key="item.uniqueKey"
-                class="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-shadow"
-                :class="item.isCustom ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200'"
+                v-for="item in dateSpecificTodos" 
+                :key="item.id"
+                class="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-shadow bg-white border-gray-200"
               > 
-                <div v-if="editingDateItemId === item.uniqueKey" class="flex-1 flex gap-2 mr-2">
+                <div v-if="editingDateItemId === item.id" class="flex-1 flex gap-2 mr-2">
                    <input
                       v-model="editDateForm.name"
                       type="text"
@@ -351,14 +368,10 @@
                 </div>
 
                 <div v-else class="flex items-center gap-3 flex-1 min-w-0">
-                   <div class="flex-shrink-0">
-                      <span v-if="item.isCustom" class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">Custom</span>
-                      <span v-else class="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">General</span>
-                   </div>
                    <span class="font-medium text-gray-800 truncate">{{ item.item_name }}</span>
                 </div>
 
-                <div v-if="editingDateItemId !== item.uniqueKey" class="flex items-center gap-2">
+                <div v-if="editingDateItemId !== item.id" class="flex items-center gap-2">
                    <button 
                       @click="startDateItemEdit(item)"
                       class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition"
@@ -376,10 +389,6 @@
                 </div>
               </div>
            </div>
-           
-           <div class="mt-6 text-sm text-gray-500 bg-gray-50 p-3 rounded">
-              <p><strong>Note:</strong> Items marked "General" are automatically included from your general configuration. Editing them here creates a custom entry for this specific date.</p>
-           </div>
         </div>
       </div>
 
@@ -390,7 +399,6 @@
 <script setup lang="ts">
 import type { TodoItem } from '~/types'
 
-// Define interfaces locally to ensure safety if types file is missing
 interface DailyTodo {
   id: string
   user_id: string
@@ -398,9 +406,6 @@ interface DailyTodo {
   item_name: string
   is_completed: boolean
   item_key: string
-  // Helper for UI
-  isCustom?: boolean
-  uniqueKey?: string
 }
 
 const supabase = useSupabase()
@@ -428,14 +433,15 @@ const message = ref<{ type: 'success' | 'error', text: string } | null>(null)
 const selectedDate = ref('')
 const dateSpecificTodos = ref<DailyTodo[]>([])
 const loadingDateItems = ref(false)
+const isSyncing = ref(false)
 const newDateItem = ref({ name: '' })
 const editingDateItemId = ref<string | null>(null)
 const editDateForm = ref({ name: '' })
 
 // COMPUTED
-const tomorrow = computed(() => {
+const today = computed(() => {
   const d = new Date()
-  d.setDate(d.getDate() + 1)
+  d.setDate(d.getDate())
   return d.toISOString().split('T')[0]
 })
 
@@ -454,45 +460,6 @@ const inactiveItems = computed(() =>
   items.value.filter(item => !item.is_active).sort((a, b) => a.display_order - b.display_order)
 )
 
-// Combined list for Date Specific Tab
-const dateSpecificList = computed(() => {
-   // 1. Start with existing Daily Todos for this date (Custom items or already instantiated general items)
-   const list = [...dateSpecificTodos.value].map(t => ({
-      ...t,
-      isCustom: true, // If it exists in daily_todos, treat it as "concretized"
-      uniqueKey: t.id
-   }))
-
-   const existingKeys = new Set(list.map(t => t.item_key))
-
-   // 2. Merge in Active General Items that don't exist in Daily Todos yet
-   // These are "Ghosts" - they will appear but aren't in daily_todos table yet
-   activeItems.value.forEach(generalItem => {
-      if (!existingKeys.has(generalItem.item_key)) {
-         list.push({
-            id: 'ghost_' + generalItem.id, // Temporary ID
-            user_id: generalItem.user_id,
-            todo_date: selectedDate.value,
-            item_name: generalItem.item_name,
-            is_completed: false,
-            item_key: generalItem.item_key,
-            isCustom: false,
-            uniqueKey: 'ghost_' + generalItem.id
-         })
-      }
-   })
-   
-   // Sort: Custom/Concretized items first (or by creation), then Ghosts? 
-   // Or just alphabetical/display order. Since daily_todos has no order, let's sort by name or keep general order
-   // Let's try to preserve general order for ghosts, and append customs.
-   
-   return list.sort((a, b) => {
-      // Simple sort by name for mixed list since we lack a unified order field
-      return a.item_name.localeCompare(b.item_name)
-   })
-})
-
-
 // ================= HELPER FUNCTIONS =================
 
 const showMessage = (type: 'success' | 'error', text: string) => {
@@ -508,7 +475,6 @@ const generateKey = (name: string): string => {
 }
 
 // ================= GENERAL CONFIG LOGIC =================
-
 const loadItems = async () => {
   try {
     loading.value = true
@@ -534,16 +500,12 @@ const addItem = async () => {
   try {
     isSubmitting.value = true
     const { data: { user: currentUser } } = await supabase.auth.getUser()
-    if (!currentUser) {
-       showMessage('error', 'You must be logged in'); return;
-    }
+    if (!currentUser) { showMessage('error', 'You must be logged in'); return; }
 
     const activeItemsCount = activeItems.value.length
     const maxOrder = activeItemsCount > 0 ? Math.max(...activeItems.value.map(i => i.display_order)) : 0
 
-    const { error } = await supabase
-      .from('todo_items')
-      .insert({
+    const { error } = await supabase.from('todo_items').insert({
         item_key: generateKey(newItem.value.name),
         item_name: newItem.value.name,
         is_active: true,
@@ -562,7 +524,7 @@ const addItem = async () => {
   }
 }
 
-// ... (Drag and Drop handlers remain same as original, condensed for brevity) ...
+// ... Drag & Drop Logic (Same as before) ...
 const handleDragStart = (event: DragEvent, item: TodoItem, index: number, isActive: boolean) => {
   draggedItem.value = item; draggedFromActive.value = isActive
   if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id) }
@@ -578,7 +540,6 @@ const handleDragOverItem = (event: DragEvent, targetItem: TodoItem, index: numbe
 const handleDragEnd = () => {
   draggedItem.value = null; dropTargetIndex.value = null; dropTargetSection.value = null; isDraggingOverActive.value = false; isDraggingOverInactive.value = false
 }
-
 const handleDropOnItem = async (event: DragEvent, targetItem: TodoItem, targetIndex: number, targetIsActive: boolean) => {
   event.stopPropagation(); if (!draggedItem.value || draggedItem.value.id === targetItem.id) { handleDragEnd(); return }
   const sourceIsActive = draggedFromActive.value; const itemToMove = draggedItem.value
@@ -598,87 +559,124 @@ const handleDropToSection = async (event: DragEvent, targetIsActive: boolean) =>
     moveItemBetweenSections(itemToMove, targetIsActive, targetList.length)
   } else handleDragEnd()
 }
-// ... (End Drag and Drop handlers) ...
-
 const moveItemBetweenSections = async (item: TodoItem, toActive: boolean, insertIndex: number) => {
   try {
     const targetList = toActive ? items.value.filter(i => i.is_active && i.id !== item.id) : items.value.filter(i => !i.is_active && i.id !== item.id)
     const updates = []
     updates.push({ id: item.id, is_active: toActive, display_order: insertIndex + 1 })
-    for (let i = insertIndex; i < targetList.length; i++) {
-      updates.push({ id: targetList[i].id, is_active: toActive, display_order: i + 2 })
-    }
-    for (const update of updates) {
-      await supabase.from('todo_items').update({ is_active: update.is_active, display_order: update.display_order }).eq('id', update.id)
-    }
+    for (let i = insertIndex; i < targetList.length; i++) { updates.push({ id: targetList[i].id, is_active: toActive, display_order: i + 2 }) }
+    for (const update of updates) { await supabase.from('todo_items').update({ is_active: update.is_active, display_order: update.display_order }).eq('id', update.id) }
   } catch (err) { showMessage('error', 'Failed to save changes'); await loadItems() }
 }
-
 const reorderWithinSection = async (item: TodoItem, newIndex: number, isActive: boolean) => {
   try {
     const targetList = isActive ? items.value.filter(i => i.is_active) : items.value.filter(i => !i.is_active)
-    const oldIndex = targetList.findIndex(i => i.id === item.id)
-    if (oldIndex === -1 || oldIndex === newIndex) return
+    const oldIndex = targetList.findIndex(i => i.id === item.id); if (oldIndex === -1 || oldIndex === newIndex) return
     const reorderedList = [...targetList]; reorderedList.splice(oldIndex, 1); reorderedList.splice(newIndex, 0, item)
-    for (let i = 0; i < reorderedList.length; i++) {
-      await supabase.from('todo_items').update({ display_order: i + 1 }).eq('id', reorderedList[i].id)
-    }
+    for (let i = 0; i < reorderedList.length; i++) { await supabase.from('todo_items').update({ display_order: i + 1 }).eq('id', reorderedList[i].id) }
   } catch (err) { showMessage('error', 'Failed to save changes'); await loadItems() }
 }
-
 const updateUIForSectionMove = (item: TodoItem, toActive: boolean, insertIndex: number) => {
   const itemIndex = items.value.findIndex(i => i.id === item.id)
   if (itemIndex !== -1) { items.value[itemIndex].is_active = toActive; items.value[itemIndex].display_order = insertIndex + 1 }
   const targetList = toActive ? items.value.filter(i => i.is_active && i.id !== item.id) : items.value.filter(i => !i.is_active && i.id !== item.id)
-  targetList.forEach((targetItem, idx) => {
-    if (idx >= insertIndex) {
-      const fullItemIndex = items.value.findIndex(i => i.id === targetItem.id)
-      if (fullItemIndex !== -1) items.value[fullItemIndex].display_order = idx + 2
-    }
-  })
+  targetList.forEach((targetItem, idx) => { if (idx >= insertIndex) { const fullItemIndex = items.value.findIndex(i => i.id === targetItem.id); if (fullItemIndex !== -1) items.value[fullItemIndex].display_order = idx + 2 } })
 }
-
 const updateUIForReorder = (item: TodoItem, newIndex: number, isActive: boolean) => {
   const targetList = isActive ? items.value.filter(i => i.is_active) : items.value.filter(i => !i.is_active)
-  const oldIndex = targetList.findIndex(i => i.id === item.id)
-  if (oldIndex === -1 || oldIndex === newIndex) return
+  const oldIndex = targetList.findIndex(i => i.id === item.id); if (oldIndex === -1 || oldIndex === newIndex) return
   const reorderedList = [...targetList]; reorderedList.splice(oldIndex, 1); reorderedList.splice(newIndex, 0, item)
-  reorderedList.forEach((reorderedItem, idx) => {
-    const fullItemIndex = items.value.findIndex(i => i.id === reorderedItem.id)
-    if (fullItemIndex !== -1) items.value[fullItemIndex].display_order = idx + 1
-  })
+  reorderedList.forEach((reorderedItem, idx) => { const fullItemIndex = items.value.findIndex(i => i.id === reorderedItem.id); if (fullItemIndex !== -1) items.value[fullItemIndex].display_order = idx + 1 })
 }
-
 const toggleActive = async (item: TodoItem) => {
-  const newActiveState = !item.is_active
-  const targetList = newActiveState ? activeItems.value : inactiveItems.value
-  const newOrder = targetList.length + 1
-  const itemIndex = items.value.findIndex(i => i.id === item.id)
-  if (itemIndex !== -1) { items.value[itemIndex].is_active = newActiveState; items.value[itemIndex].display_order = newOrder }
+  const newActiveState = !item.is_active; const targetList = newActiveState ? activeItems.value : inactiveItems.value; const newOrder = targetList.length + 1
+  const itemIndex = items.value.findIndex(i => i.id === item.id); if (itemIndex !== -1) { items.value[itemIndex].is_active = newActiveState; items.value[itemIndex].display_order = newOrder }
   const { error } = await supabase.from('todo_items').update({ is_active: newActiveState, display_order: newOrder }).eq('id', item.id)
   if (error) { showMessage('error', 'Failed to save changes'); loadItems() }
 }
-
 const startEdit = (item: TodoItem) => { editingId.value = item.id; editForm.value = { name: item.item_name } }
 const cancelEdit = () => { editingId.value = null; editForm.value = { name: '' } }
 const saveEdit = async (itemId: string) => {
-  try {
-    const { error } = await supabase.from('todo_items').update({ item_name: editForm.value.name }).eq('id', itemId)
-    if (error) throw error
-    showMessage('success', 'Item updated!'); editingId.value = null; await loadItems()
-  } catch (err: any) { showMessage('error', err.message || 'Failed to update') }
+  try { const { error } = await supabase.from('todo_items').update({ item_name: editForm.value.name }).eq('id', itemId); if (error) throw error; showMessage('success', 'Item updated!'); editingId.value = null; await loadItems() } catch (err: any) { showMessage('error', err.message || 'Failed to update') }
 }
-
 const deleteItem = async (item: TodoItem) => {
   if (!confirm(`Are you sure you want to delete "${item.item_name}"?`)) return
-  try {
-    const { error } = await supabase.from('todo_items').delete().eq('id', item.id)
-    if (error) throw error
-    showMessage('success', 'Item deleted!'); await loadItems()
-  } catch (err: any) { showMessage('error', err.message || 'Failed to delete') }
+  try { const { error } = await supabase.from('todo_items').delete().eq('id', item.id); if (error) throw error; showMessage('success', 'Item deleted!'); await loadItems() } catch (err: any) { showMessage('error', err.message || 'Failed to delete') }
 }
 
 // ================= DATE SPECIFIC LOGIC =================
+
+const syncGeneralItems = async () => {
+  if (!selectedDate.value) return
+  isSyncing.value = true
+  
+  try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) return
+
+    // 1. Get all active general items
+    const { data: generalItems } = await supabase
+      .from('todo_items')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .eq('is_active', true)
+      
+    if (!generalItems || generalItems.length === 0) return
+
+    // 2. Get existing items for this specific date
+    const { data: existingItems } = await supabase
+      .from('daily_todos')
+      .select('item_key')
+      .eq('user_id', currentUser.id)
+      .eq('todo_date', selectedDate.value)
+      
+    const existingKeys = new Set(existingItems?.map(i => i.item_key) || [])
+    
+    // 3. Filter only items that DON'T exist yet for this date
+    const itemsToAdd = generalItems
+      .filter(g => !existingKeys.has(g.item_key))
+      .map(g => ({
+        user_id: currentUser.id,
+        todo_date: selectedDate.value,
+        item_name: g.item_name,
+        item_key: g.item_key,
+        is_completed: false
+      }))
+
+    if (itemsToAdd.length > 0) {
+      const { error } = await supabase.from('daily_todos').insert(itemsToAdd)
+      if (error) throw error
+    }
+
+    // 4. Mark as initialized
+    await supabase.from('daily_schedule_status').upsert({
+      user_id: currentUser.id,
+      schedule_date: selectedDate.value,
+      is_initialized: true
+    }, { onConflict: 'user_id, schedule_date' })
+
+    await loadDateTodosOnly()
+    showMessage('success', 'Synced with general list')
+
+  } catch (err: any) {
+    showMessage('error', 'Sync failed')
+    console.error(err)
+  } finally {
+    isSyncing.value = false
+  }
+}
+
+const loadDateTodosOnly = async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) return
+    const { data, error } = await supabase
+      .from('daily_todos')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .eq('todo_date', selectedDate.value)
+    if (error) throw error
+    dateSpecificTodos.value = data || []
+}
 
 const loadDateTodos = async () => {
   if (!selectedDate.value) return
@@ -687,16 +685,27 @@ const loadDateTodos = async () => {
      loadingDateItems.value = true
      const { data: { user: currentUser } } = await supabase.auth.getUser()
      if (!currentUser) return
-     
-     // Fetch explicit daily todos for this date
-     const { data, error } = await supabase
-        .from('daily_todos')
-        .select('*')
+
+     // Check if this date is initialized
+     const { data: statusData } = await supabase
+        .from('daily_schedule_status')
+        .select('is_initialized')
         .eq('user_id', currentUser.id)
-        .eq('todo_date', selectedDate.value)
-        
-     if (error) throw error
-     dateSpecificTodos.value = data || []
+        .eq('schedule_date', selectedDate.value)
+        .maybeSingle()
+    
+     const isInitialized = statusData?.is_initialized
+
+     console.log('isInitialized', isInitialized)
+
+     if (!isInitialized) {
+        // First time visiting this date! Run sync automatically
+        await syncGeneralItems()
+     } else {
+        // Already initialized, just load what is there
+        await loadDateTodosOnly()
+     }
+
   } catch (err: any) {
      showMessage('error', 'Failed to load date schedule')
      console.error(err)
@@ -723,9 +732,16 @@ const addDateSpecificItem = async () => {
       
       if (error) throw error
       
+      // Ensure we mark as initialized if we manually add an item
+      await supabase.from('daily_schedule_status').upsert({
+         user_id: currentUser.id,
+         schedule_date: selectedDate.value,
+         is_initialized: true
+      }, { onConflict: 'user_id, schedule_date' })
+      
       showMessage('success', 'Added to schedule')
       newDateItem.value.name = ''
-      await loadDateTodos()
+      await loadDateTodosOnly()
    } catch (err: any) {
       showMessage('error', err.message || 'Failed to add item')
    } finally {
@@ -733,9 +749,8 @@ const addDateSpecificItem = async () => {
    }
 }
 
-// Handler for editing an item in the date list
-const startDateItemEdit = (item: any) => {
-   editingDateItemId.value = item.uniqueKey
+const startDateItemEdit = (item: DailyTodo) => {
+   editingDateItemId.value = item.id
    editDateForm.value.name = item.item_name
 }
 
@@ -744,74 +759,52 @@ const cancelDateItemEdit = () => {
    editDateForm.value.name = ''
 }
 
-const saveDateItemEdit = async (item: any) => {
+const saveDateItemEdit = async (item: DailyTodo) => {
    try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (!currentUser) return
-
-      if (item.isCustom) {
-         // It's a real row in daily_todos, update it
-         const { error } = await supabase
-            .from('daily_todos')
-            .update({ item_name: editDateForm.value.name })
-            .eq('id', item.id)
-         
-         if (error) throw error
-      } else {
-         // It's a "Ghost" (general item). We must INSERT it now to make it a custom instance for this day
-         const { error } = await supabase.from('daily_todos').insert({
-            user_id: currentUser.id,
-            todo_date: selectedDate.value,
-            item_name: editDateForm.value.name, // New name
-            item_key: item.item_key, // Keep original key so we know it originated from general
-            is_completed: false
-         })
-         
-         if (error) throw error
-      }
+      const { error } = await supabase
+        .from('daily_todos')
+        .update({ item_name: editDateForm.value.name })
+        .eq('id', item.id)
       
+      if (error) throw error
       showMessage('success', 'Item updated for this date')
       editingDateItemId.value = null
-      await loadDateTodos()
+      await loadDateTodosOnly()
    } catch (err: any) {
       showMessage('error', err.message || 'Failed to update')
    }
 }
 
-const deleteDateItem = async (item: any) => {
+const deleteDateItem = async (item: DailyTodo) => {
    if (!confirm(`Remove "${item.item_name}" from ${formattedSelectedDate.value}?`)) return
    
    try {
-      if (item.isCustom) {
-         // It's a real row, delete it
-         const { error } = await supabase
-            .from('daily_todos')
-            .delete()
-            .eq('id', item.id)
-            
-         if (error) throw error
-         await loadDateTodos()
-         showMessage('success', 'Removed from date')
-      } else {
-         // It's a Ghost item. 
-         // Since we can't "delete" what doesn't exist, and index.vue automatically creates them,
-         // we technically can't permanently delete a general item from a specific day without a "blacklist" table.
-         // However, for this implementation, we will notify the user.
-         alert('This is a General Item. To prevent it from appearing, please disable it in General Configuration, or complete it on the day.')
-      }
+     const { error } = await supabase.from('daily_todos').delete().eq('id', item.id)
+     if (error) throw error
+     
+     // Note: We do NOT toggle is_initialized back to false. 
+     // The user intentionally deleted it, so we don't want auto-sync to bring it back.
+     
+     await loadDateTodosOnly()
+     showMessage('success', 'Removed from date')
    } catch (err: any) {
       showMessage('error', err.message)
    }
 }
 
-// Initialize
+watch(activeTab, (newTab) => {
+  if (newTab === 'custom') {
+    // Only load if we have a date selected, otherwise default to tomorrow logic inside the function or here
+    if (!selectedDate.value) {
+       selectedDate.value = new Date().toISOString().split('T')[0]
+    }
+
+    loadDateTodos()
+  }
+})
+
 onMounted(() => {
-   // Set default date to tomorrow for the custom tab
-   const tmr = new Date()
-   tmr.setDate(tmr.getDate() + 1)
-   selectedDate.value = tmr.toISOString().split('T')[0]
-   
+   selectedDate.value = new Date().toISOString().split('T')[0]
    loadItems()
-   loadDateTodos()
 })
 </script>
