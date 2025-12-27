@@ -5,7 +5,7 @@
       <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Configure Items</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Add Todo Items</h1>
             <p class="text-sm md:text-base text-gray-600 mt-1">Manage your general routine or specific days</p>
           </div>
           <NuxtLink
@@ -466,7 +466,17 @@ const addItem = async () => {
     newItem.value = { name: '' }
     await loadItems()
   } catch (err: any) {
-    showMessage('error', err.message || 'Failed to add item')
+    let errorMessage = ''
+
+    switch(err.code) {
+      case '23505':
+        errorMessage = 'Item already exists in the list !'
+        break;
+      default:
+        errorMessage = 'Failed to add item'
+    }
+
+    showMessage('error', errorMessage)
   } finally {
     isSubmitting.value = false
   }
@@ -505,21 +515,21 @@ const syncGeneralItems = async () => {
       .select('*')
       .eq('user_id', currentUser.id)
       .eq('is_active', true)
-      
+
     if (!generalItems || generalItems.length === 0) return
 
     // 2. Get existing items for this specific date
     const { data: existingItems } = await supabase
       .from('daily_todos')
-      .select('item_key')
+      .select('item_name')
       .eq('user_id', currentUser.id)
       .eq('todo_date', selectedDate.value)
       
-    const existingKeys = new Set(existingItems?.map(i => i.item_key) || [])
-    
+    const existingKeys = new Set(existingItems?.map(i => i.item_name.toLowerCase()) || [])
+
     // 3. Filter only items that DON'T exist yet for this date
     const itemsToAdd = generalItems
-      .filter(g => !existingKeys.has(g.item_key))
+      .filter(g => !existingKeys.has(g.item_name.toLowerCase()))
       .map(g => ({
         user_id: currentUser.id,
         todo_date: selectedDate.value,
@@ -628,7 +638,17 @@ const addDateSpecificItem = async () => {
       newDateItem.value.name = ''
       await loadDateTodosOnly()
    } catch (err: any) {
-      showMessage('error', err.message || 'Failed to add item')
+      let errorMessage = ''
+
+      switch(err.code) {
+        case '23505':
+          errorMessage = 'Item already exists in the list !'
+          break;
+        default:
+          errorMessage = 'Failed to add item'
+      }
+
+      showMessage('error', errorMessage)
    } finally {
       isSubmitting.value = false
    }
