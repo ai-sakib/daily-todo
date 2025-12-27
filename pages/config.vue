@@ -36,14 +36,32 @@
 
       <Transition name="fade">
         <div v-if="message" 
-          class="fixed top-5 right-5 z-[100] max-w-sm w-full shadow-2xl rounded-lg border p-4 flex items-start gap-3 animate-in slide-in-from-right-5 duration-300"
+          class="fixed z-[100] 
+                /* Mobile: Bottom Center */
+                bottom-5 left-4 right-4 
+                /* Desktop: Top Right */
+                sm:bottom-auto sm:top-5 sm:left-auto sm:right-5 
+                sm:max-w-sm w-auto shadow-2xl rounded-xl border p-4 
+                flex items-center gap-3 
+                animate-in slide-in-from-bottom-5 sm:slide-in-from-right-5 duration-300"
           :class="message.type === 'error' ? 'bg-red-50 text-red-800 border-red-200' : 'bg-green-50 text-green-800 border-green-200'"
         >
-          <div class="flex-1">
-            <p class="text-sm font-medium">{{ message.text }}</p>
+          <div class="flex-shrink-0">
+            <span v-if="message.type === 'error'" class="text-lg">⚠️</span>
+            <span v-else class="text-lg">✅</span>
           </div>
-          <button @click="message = null" class="text-gray-400 hover:text-gray-600 transition">
-            <span class="text-xl leading-none">×</span>
+
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold leading-tight">{{ message.text }}</p>
+          </div>
+
+          <button 
+            @click="message = null" 
+            class="flex-shrink-0 p-1 rounded-md hover:bg-black/5 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
           </button>
         </div>
       </Transition>
@@ -753,12 +771,18 @@ onMounted(() => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-enter-from {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(20px); /* Slide up on enter */
+}
+
+@media (min-width: 640px) {
+  .fade-enter-from {
+    transform: translateX(20px); /* Slide from right on desktop */
+  }
 }
 
 .fade-leave-to {
