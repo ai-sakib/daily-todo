@@ -476,16 +476,26 @@ const addItem = async () => {
 
     const activeItemsCount = activeItems.value.length
     const maxOrder = activeItemsCount > 0 ? Math.max(...activeItems.value.map(i => i.display_order)) : 0
+    const itemKey = generateKey(newItem.value.name)
+    const itemName = newItem.value.name
 
-    const { error } = await supabase.from('todo_items').insert({
-        item_key: generateKey(newItem.value.name),
-        item_name: newItem.value.name,
-        is_active: true,
-        display_order: maxOrder + 1,
-        user_id: currentUser.id
-      })
+    const { error: todoItemsError } = await supabase.from('todo_items').insert({
+      item_key: itemKey,
+      item_name: itemName,
+      is_active: true,
+      display_order: maxOrder + 1,
+      user_id: currentUser.id
+    })
 
-    if (error) throw error
+    const { error: dailyTodosError } = await supabase.from('daily_todos').insert({
+      user_id: currentUser.id,
+      todo_date: todayStr.value,
+      item_name: itemName,
+      item_key: itemKey,
+      is_completed: false
+    })
+
+    if (todoItemsError || dailyTodosError) throw todoItemsError || dailyTodosError
     showMessage('success', 'Item added successfully!')
     newItem.value = { name: '' }
     await loadItems()
