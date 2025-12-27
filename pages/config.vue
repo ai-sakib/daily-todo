@@ -80,51 +80,28 @@
                 Shown on home
               </div>
             </div>
-            <p class="text-sm text-gray-600 mb-4">
-              Drag to reorder • Top item has highest priority
-            </p>
 
             <div
               ref="activeDropZone"
               class="min-h-[300px] rounded-lg transition-colors"
-              :class="{
-                'bg-indigo-50 border-2 border-dashed border-indigo-400': isDraggingOverActive && !draggedFromActive,
-                'bg-white': !(isDraggingOverActive && !draggedFromActive)
-              }"
-              @dragover.prevent="handleDragOverSection($event, true)"
-              @dragleave="handleDragLeaveSection"
-              @drop.prevent="handleDropToSection($event, true)"
             >
               <div v-if="activeItems.length === 0" class="flex items-center justify-center h-[200px] text-gray-500">
                 <div class="text-center">
                   <div class="text-4xl mb-2">📋</div>
                   <p>No active items</p>
-                  <p class="text-sm">Drag items here or add new ones above</p>
                 </div>
               </div>
 
               <div v-else class="space-y-2">
                 <div
-                  v-for="(item, index) in activeItems"
+                  v-for="item in activeItems"
                   :key="item.id"
-                  :draggable="editingId !== item.id"
-                  @dragstart="handleDragStart($event, item, index, true)"
-                  @dragend="handleDragEnd"
-                  @dragover.prevent="handleDragOverItem($event, item, index, true)"
-                  @drop.prevent="handleDropOnItem($event, item, index, true)"
                   class="relative border rounded-lg px-2 py-1.5 transition-all duration-200"
                   :class="{
-                    'opacity-40 scale-95': draggedItem?.id === item.id,
-                    'border-gray-200 hover:border-indigo-300 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': draggedItem?.id !== item.id && editingId !== item.id,
-                    'border-indigo-400 bg-indigo-50 transform translate-y-1': dropTargetIndex === index && dropTargetSection === 'active' && draggedItem?.id !== item.id,
+                    'border-gray-200 hover:border-indigo-300 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': editingId !== item.id,
                     'cursor-default border-gray-300': editingId === item.id
                   }"
                 >
-                  <div 
-                    v-if="dropTargetIndex === index && dropTargetSection === 'active' && draggedItem?.id !== item.id"
-                    class="absolute -top-1 left-0 right-0 h-0.5 bg-indigo-500 rounded-full"
-                  ></div>
-
                   <div v-if="editingId === item.id" class="space-y-3">
                     <input
                       v-model="editForm.name"
@@ -168,13 +145,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div
-                  v-if="dropTargetIndex === activeItems.length && dropTargetSection === 'active'"
-                  class="h-12 border-2 border-dashed border-indigo-400 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 text-sm"
-                >
-                  Drop here
-                </div>
               </div>
             </div>
           </div>
@@ -196,44 +166,24 @@
             <div
               ref="inactiveDropZone"
               class="min-h-[300px] rounded-lg transition-colors"
-              :class="{
-                'bg-gray-100 border-2 border-dashed border-gray-400': isDraggingOverInactive && draggedFromActive,
-                'bg-white': !(isDraggingOverInactive && draggedFromActive)
-              }"
-              @dragover.prevent="handleDragOverSection($event, false)"
-              @dragleave="handleDragLeaveSection"
-              @drop.prevent="handleDropToSection($event, false)"
             >
               <div v-if="inactiveItems.length === 0" class="flex items-center justify-center h-[200px] text-gray-500">
                 <div class="text-center">
                   <div class="text-4xl mb-2">💤</div>
                   <p>No inactive items</p>
-                  <p class="text-sm">Drag items here to hide them</p>
                 </div>
               </div>
 
               <div v-else class="space-y-2">
                 <div
-                  v-for="(item, index) in inactiveItems"
+                  v-for="item in inactiveItems"
                   :key="item.id"
-                  :draggable="editingId !== item.id"
-                  @dragstart="handleDragStart($event, item, index, false)"
-                  @dragend="handleDragEnd"
-                  @dragover.prevent="handleDragOverItem($event, item, index, false)"
-                  @drop.prevent="handleDropOnItem($event, item, index, false)"
                   class="relative border rounded-lg px-2 py-1.5 transition-all duration-200 opacity-75 hover:opacity-100"
                   :class="{
-                    'opacity-20 scale-95': draggedItem?.id === item.id,
-                    'border-gray-200 hover:border-gray-400 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': draggedItem?.id !== item.id && editingId !== item.id,
-                    'border-gray-400 bg-gray-100 transform translate-y-1': dropTargetIndex === index && dropTargetSection === 'inactive' && draggedItem?.id !== item.id,
+                    'border-gray-200 hover:border-gray-400 hover:shadow-md bg-white cursor-grab active:cursor-grabbing': editingId !== item.id,
                     'cursor-default border-gray-300': editingId === item.id
                   }"
                 >
-                  <div 
-                    v-if="dropTargetIndex === index && dropTargetSection === 'inactive' && draggedItem?.id !== item.id"
-                    class="absolute -top-1 left-0 right-0 h-0.5 bg-gray-500 rounded-full"
-                  ></div>
-
                   <div v-if="editingId === item.id" class="space-y-3">
                     <input
                       v-model="editForm.name"
@@ -256,13 +206,6 @@
                       <button @click="deleteItem(item)" class="w-7 h-7 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition" title="Delete">✕</button>
                     </div>
                   </div>
-                </div>
-
-                <div
-                  v-if="dropTargetIndex === inactiveItems.length && dropTargetSection === 'inactive'"
-                  class="h-12 border-2 border-dashed border-gray-400 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 text-sm"
-                >
-                  Drop here
                 </div>
               </div>
             </div>
@@ -426,12 +369,6 @@ const items = ref<TodoItem[]>([])
 const loading = ref(true)
 const isSubmitting = ref(false)
 const editingId = ref<string | null>(null)
-const draggedItem = ref<TodoItem | null>(null)
-const draggedFromActive = ref<boolean>(false)
-const dropTargetIndex = ref<number | null>(null)
-const dropTargetSection = ref<'active' | 'inactive' | null>(null)
-const isDraggingOverActive = ref(false)
-const isDraggingOverInactive = ref(false)
 const newItem = ref({ name: '' })
 const editForm = ref({ name: '' })
 const message = ref<{ type: 'success' | 'error', text: string } | null>(null)
@@ -531,70 +468,6 @@ const addItem = async () => {
   }
 }
 
-// ... Drag & Drop Logic (Same as before) ...
-const handleDragStart = (event: DragEvent, item: TodoItem, index: number, isActive: boolean) => {
-  draggedItem.value = item; draggedFromActive.value = isActive
-  if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id) }
-}
-const handleDragOverSection = (event: DragEvent, isActive: boolean) => {
-  event.preventDefault(); isActive ? (isDraggingOverActive.value = true, isDraggingOverInactive.value = false) : (isDraggingOverActive.value = false, isDraggingOverInactive.value = true)
-}
-const handleDragLeaveSection = () => { isDraggingOverActive.value = false; isDraggingOverInactive.value = false }
-const handleDragOverItem = (event: DragEvent, targetItem: TodoItem, index: number, isActive: boolean) => {
-  event.preventDefault(); if (!draggedItem.value || draggedItem.value.id === targetItem.id) return
-  dropTargetIndex.value = index; dropTargetSection.value = isActive ? 'active' : 'inactive'
-}
-const handleDragEnd = () => {
-  draggedItem.value = null; dropTargetIndex.value = null; dropTargetSection.value = null; isDraggingOverActive.value = false; isDraggingOverInactive.value = false
-}
-const handleDropOnItem = async (event: DragEvent, targetItem: TodoItem, targetIndex: number, targetIsActive: boolean) => {
-  event.stopPropagation(); if (!draggedItem.value || draggedItem.value.id === targetItem.id) { handleDragEnd(); return }
-  const sourceIsActive = draggedFromActive.value; const itemToMove = draggedItem.value
-  if (sourceIsActive !== targetIsActive) updateUIForSectionMove(itemToMove, targetIsActive, targetIndex)
-  else updateUIForReorder(itemToMove, targetIndex, targetIsActive)
-  handleDragEnd()
-  if (sourceIsActive !== targetIsActive) moveItemBetweenSections(itemToMove, targetIsActive, targetIndex)
-  else reorderWithinSection(itemToMove, targetIndex, targetIsActive)
-}
-const handleDropToSection = async (event: DragEvent, targetIsActive: boolean) => {
-  if (!draggedItem.value) { handleDragEnd(); return }
-  const sourceIsActive = draggedFromActive.value; const itemToMove = draggedItem.value
-  if (sourceIsActive !== targetIsActive) {
-    const targetList = targetIsActive ? activeItems.value : inactiveItems.value
-    updateUIForSectionMove(itemToMove, targetIsActive, targetList.length)
-    handleDragEnd()
-    moveItemBetweenSections(itemToMove, targetIsActive, targetList.length)
-  } else handleDragEnd()
-}
-const moveItemBetweenSections = async (item: TodoItem, toActive: boolean, insertIndex: number) => {
-  try {
-    const targetList = toActive ? items.value.filter(i => i.is_active && i.id !== item.id) : items.value.filter(i => !i.is_active && i.id !== item.id)
-    const updates = []
-    updates.push({ id: item.id, is_active: toActive, display_order: insertIndex + 1 })
-    for (let i = insertIndex; i < targetList.length; i++) { updates.push({ id: targetList[i].id, is_active: toActive, display_order: i + 2 }) }
-    for (const update of updates) { await supabase.from('todo_items').update({ is_active: update.is_active, display_order: update.display_order }).eq('id', update.id) }
-  } catch (err) { showMessage('error', 'Failed to save changes'); await loadItems() }
-}
-const reorderWithinSection = async (item: TodoItem, newIndex: number, isActive: boolean) => {
-  try {
-    const targetList = isActive ? items.value.filter(i => i.is_active) : items.value.filter(i => !i.is_active)
-    const oldIndex = targetList.findIndex(i => i.id === item.id); if (oldIndex === -1 || oldIndex === newIndex) return
-    const reorderedList = [...targetList]; reorderedList.splice(oldIndex, 1); reorderedList.splice(newIndex, 0, item)
-    for (let i = 0; i < reorderedList.length; i++) { await supabase.from('todo_items').update({ display_order: i + 1 }).eq('id', reorderedList[i].id) }
-  } catch (err) { showMessage('error', 'Failed to save changes'); await loadItems() }
-}
-const updateUIForSectionMove = (item: TodoItem, toActive: boolean, insertIndex: number) => {
-  const itemIndex = items.value.findIndex(i => i.id === item.id)
-  if (itemIndex !== -1) { items.value[itemIndex].is_active = toActive; items.value[itemIndex].display_order = insertIndex + 1 }
-  const targetList = toActive ? items.value.filter(i => i.is_active && i.id !== item.id) : items.value.filter(i => !i.is_active && i.id !== item.id)
-  targetList.forEach((targetItem, idx) => { if (idx >= insertIndex) { const fullItemIndex = items.value.findIndex(i => i.id === targetItem.id); if (fullItemIndex !== -1) items.value[fullItemIndex].display_order = idx + 2 } })
-}
-const updateUIForReorder = (item: TodoItem, newIndex: number, isActive: boolean) => {
-  const targetList = isActive ? items.value.filter(i => i.is_active) : items.value.filter(i => !i.is_active)
-  const oldIndex = targetList.findIndex(i => i.id === item.id); if (oldIndex === -1 || oldIndex === newIndex) return
-  const reorderedList = [...targetList]; reorderedList.splice(oldIndex, 1); reorderedList.splice(newIndex, 0, item)
-  reorderedList.forEach((reorderedItem, idx) => { const fullItemIndex = items.value.findIndex(i => i.id === reorderedItem.id); if (fullItemIndex !== -1) items.value[fullItemIndex].display_order = idx + 1 })
-}
 const toggleActive = async (item: TodoItem) => {
   const newActiveState = !item.is_active; const targetList = newActiveState ? activeItems.value : inactiveItems.value; const newOrder = targetList.length + 1
   const itemIndex = items.value.findIndex(i => i.id === item.id); if (itemIndex !== -1) { items.value[itemIndex].is_active = newActiveState; items.value[itemIndex].display_order = newOrder }
