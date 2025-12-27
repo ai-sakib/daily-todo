@@ -162,47 +162,39 @@ const filters = ref({
   toDate: ''
 })
 
-// Set default date range (last 30 days)
+const formatDate = (dateStr: string) => {
+  // Append T00:00:00 to prevent the date object from shifting to the previous day due to UTC conversion
+  const date = new Date(dateStr + 'T00:00:00')
+  const today = new Date()
+  const todayStr = today.toLocaleDateString('en-CA')
+  
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toLocaleDateString('en-CA')
+
+  if (dateStr === todayStr) {
+    return 'Today - ' + date.toLocaleDateString('en-US', { 
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    })
+  } else if (dateStr === yesterdayStr) {
+    return 'Yesterday - ' + date.toLocaleDateString('en-US', { 
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    })
+  }
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  })
+}
+
 const initializeDates = () => {
   const today = new Date()
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(today.getDate() - 30)
 
-  filters.value.toDate = today.toISOString().split('T')[0]
-  filters.value.fromDate = thirtyDaysAgo.toISOString().split('T')[0]
-}
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr + 'T00:00:00')
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  const todayStr = today.toISOString().split('T')[0]
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
-
-  if (dateStr === todayStr) {
-    return 'Today - ' + date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric'
-    })
-  } else if (dateStr === yesterdayStr) {
-    return 'Yesterday - ' + date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric'
-    })
-  }
-
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  // Use local-safe strings
+  filters.value.toDate = today.toLocaleDateString('en-CA')
+  filters.value.fromDate = thirtyDaysAgo.toLocaleDateString('en-CA')
 }
 
 const formatTime = (timestamp: string) => {

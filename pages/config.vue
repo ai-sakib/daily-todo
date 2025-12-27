@@ -698,7 +698,11 @@ const deleteDateItem = async (item: DailyTodo) => {
 }
 
 // Helper for date string formatting (YYYY-MM-DD)
-const todayStr = computed(() => new Date().toISOString().split('T')[0])
+const todayStr = computed(() => {
+  const d = new Date()
+  // This ensures YYYY-MM-DD matches your local BDT date
+  return d.toLocaleDateString('en-CA') // en-CA format is exactly YYYY-MM-DD
+})
 
 // Disable prev if selectedDate is today or earlier
 const isPrevDisabled = computed(() => {
@@ -710,16 +714,18 @@ const isPrevDisabled = computed(() => {
 const shiftDate = (days: number) => {
   if (!selectedDate.value) return
   
-  const current = new Date(selectedDate.value)
+  // Use the date string to create a local date object
+  const parts = selectedDate.value.split('-')
+  const current = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+  
   current.setDate(current.getDate() + days)
   
-  const newDateStr = current.toISOString().split('T')[0]
+  const newDateStr = current.toLocaleDateString('en-CA')
   
-  // Prevent going before today
   if (newDateStr < todayStr.value) return
   
   selectedDate.value = newDateStr
-  loadDateTodos() // Trigger the load/sync logic
+  loadDateTodos()
 }
 
 let messageTimeout: NodeJS.Timeout | null = null

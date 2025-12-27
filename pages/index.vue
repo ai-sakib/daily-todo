@@ -165,7 +165,7 @@ const { user, signOut } = useAuth()
 const todos = ref<DailyTodoWithItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const today = ref(new Date().toISOString().split('T')[0])
+const today = ref(new Date().toLocaleDateString('en-CA'))
 
 // Computed property to sort todos: uncompleted first, completed last
 const sortedTodos = computed(() => {
@@ -198,9 +198,12 @@ const progressPercentage = computed(() => {
 })
 
 const formatTime = (timestamp: string) => {
+  if (!timestamp) return ''
+  // toLocaleTimeString automatically converts UTC from DB to BDT (GMT+6)
   return new Date(timestamp).toLocaleTimeString('en-US', {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: true
   })
 }
 
@@ -313,12 +316,15 @@ const toggleTodo = async (todo: DailyTodoWithItem) => {
     }
 
     // Update database in background
+
+    const now = new Date().toISOString()
+
     const { error: updateError } = await supabase
       .from('daily_todos')
       .update({
         is_completed: newCompletedState,
-        completed_at: newCompletedState ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString()
+        completed_at: newCompletedState ? now : null,
+        updated_at: now
       })
       .eq('id', todo.id)
 
