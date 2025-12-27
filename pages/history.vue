@@ -261,7 +261,7 @@ const loadHistory = async () => {
 
       grouped[todo.todo_date].push({
         ...todo,
-        item_name: itemMap.get(todo.item_key) || todo.item_key
+        item_name: todo.item_name
       })
     })
 

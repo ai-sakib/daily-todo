@@ -259,6 +259,7 @@ const loadTodos = async () => {
           .insert({
             todo_date: today.value,
             item_key: item.item_key,
+            item_name: item.item_name,
             is_completed: false,
             user_id: currentUser.id
           })
