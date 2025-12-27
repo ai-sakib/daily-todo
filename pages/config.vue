@@ -231,7 +231,6 @@
               <div class="flex items-center gap-2">
                 <button 
                   @click="shiftDate(-1)"
-                  :disabled="isPrevDisabled"
                   class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
                   title="Previous Day"
                 >
@@ -704,11 +703,6 @@ const todayStr = computed(() => {
   return d.toLocaleDateString('en-CA') // en-CA format is exactly YYYY-MM-DD
 })
 
-// Disable prev if selectedDate is today or earlier
-const isPrevDisabled = computed(() => {
-  if (!selectedDate.value) return true
-  return selectedDate.value <= todayStr.value
-})
 
 // Function to move date forward or backward
 const shiftDate = (days: number) => {
@@ -721,8 +715,6 @@ const shiftDate = (days: number) => {
   current.setDate(current.getDate() + days)
   
   const newDateStr = current.toLocaleDateString('en-CA')
-  
-  if (newDateStr < todayStr.value) return
   
   selectedDate.value = newDateStr
   loadDateTodos()
