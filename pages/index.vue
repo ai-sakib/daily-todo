@@ -290,6 +290,7 @@ const loadTodos = async () => {
       .select('*')
       .eq('todo_date', today.value)
       .eq('user_id', currentUser.id)
+      .order('item_name')
 
     if (dailyError) throw dailyError
 

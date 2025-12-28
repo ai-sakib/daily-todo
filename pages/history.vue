@@ -235,14 +235,13 @@ const loadHistory = async () => {
 
     if (itemsError) throw itemsError
 
-    const itemMap = new Map(items?.map(item => [item.item_key, item.item_name]) || [])
-
     // Load daily todos
     let query = supabase
       .from('daily_todos')
       .select('*')
       .eq('user_id', currentUser.id)
       .order('todo_date', { ascending: false })
+      .order('item_name')
 
     if (filters.value.fromDate) {
       query = query.gte('todo_date', filters.value.fromDate)

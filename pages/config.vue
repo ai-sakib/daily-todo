@@ -415,13 +415,6 @@ const newDateItem = ref({ name: '' })
 const editingDateItemId = ref<string | null>(null)
 const editDateForm = ref({ name: '' })
 
-// COMPUTED
-const today = computed(() => {
-  const d = new Date()
-  d.setDate(d.getDate())
-  return d.toISOString().split('T')[0]
-})
-
 const formattedSelectedDate = computed(() => {
   if (!selectedDate.value) return ''
   return new Date(selectedDate.value).toLocaleDateString('en-US', {
@@ -430,11 +423,11 @@ const formattedSelectedDate = computed(() => {
 })
 
 const activeItems = computed(() => 
-  items.value.filter(item => item.is_active).sort((a, b) => a.display_order - b.display_order)
+  items.value.filter(item => item.is_active)
 )
 
 const inactiveItems = computed(() => 
-  items.value.filter(item => !item.is_active).sort((a, b) => a.display_order - b.display_order)
+  items.value.filter(item => !item.is_active)
 )
 
 // ================= HELPER FUNCTIONS =================
@@ -457,7 +450,7 @@ const loadItems = async () => {
       .from('todo_items')
       .select('*')
       .eq('user_id', currentUser.id)
-      .order('created_at')
+      .order('item_name')
 
     if (error) throw error
     items.value = data || []
@@ -667,7 +660,7 @@ const loadDateTodosOnly = async () => {
       .select('*')
       .eq('user_id', currentUser.id)
       .eq('todo_date', selectedDate.value)
-      .order('created_at')
+      .order('item_name')
     if (error) throw error
     dateSpecificTodos.value = data || []
 }
