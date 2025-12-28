@@ -479,7 +479,8 @@ const addItem = async () => {
     const itemKey = generateKey(newItem.value.name)
     const itemName = newItem.value.name
 
-    const { error: todoItemsError } = await supabase.from('todo_items').insert({
+    // 1. Add to General configuration (todo_items)
+    const { error: genError } = await supabase.from('todo_items').insert({
       item_key: itemKey,
       item_name: itemName,
       is_active: true,
@@ -487,30 +488,37 @@ const addItem = async () => {
       user_id: currentUser.id
     })
 
-    const { error: dailyTodosError } = await supabase.from('daily_todos').insert({
-      user_id: currentUser.id,
-      todo_date: todayStr.value,
-      item_name: itemName,
-      item_key: itemKey,
-      is_completed: false
-    })
+    if (genError) throw genError
 
-    if (todoItemsError || dailyTodosError) throw todoItemsError || dailyTodosError
-    showMessage('success', 'Item added successfully!')
+    // 2. Add to Daily Todos for Today and Future
+    // First, find all dates that have already been initialized/synced
+    const { data: initializedDates } = await supabase
+      .from('daily_schedule_status')
+      .select('schedule_date')
+      .eq('user_id', currentUser.id)
+      .gte('schedule_date', todayStr.value)
+
+    if (initializedDates && initializedDates.length > 0) {
+      const dailyEntries = initializedDates.map(status => ({
+        user_id: currentUser.id,
+        todo_date: status.schedule_date,
+        item_name: itemName,
+        item_key: itemKey,
+        is_completed: false
+      }))
+
+      const { error: dailyError } = await supabase
+        .from('daily_todos')
+        .insert(dailyEntries)
+
+      if (dailyError) console.error('Error adding to future schedules:', dailyError)
+    }
+
+    showMessage('success', 'Item added to general list and all future schedules!')
     newItem.value = { name: '' }
     await loadItems()
   } catch (err: any) {
-    let errorMessage = ''
-
-    switch(err.code) {
-      case '23505':
-        errorMessage = 'Item already exists in the list !'
-        break;
-      default:
-        errorMessage = 'Failed to add item'
-    }
-
-    showMessage('error', errorMessage)
+    showMessage('error', err.message || 'Failed to add item')
   } finally {
     isSubmitting.value = false
   }
@@ -539,15 +547,18 @@ const saveEdit = async (itemId: string) => {
 
     if (itemError) throw itemError
 
-    // 3. Update all daily_todos that match the old name
+    // 3. Update Daily Todos (Today and Future only)
     if (oldName) {
-      await supabase
+      const { error: dailyError } = await supabase
         .from('daily_todos')
         .update({ item_name: newName })
         .eq('item_name', oldName)
+        .gte('todo_date', todayStr.value) // Only Today or Future
+
+      if (dailyError) throw dailyError
     }
 
-    showMessage('success', 'Item updated everywhere!')
+    showMessage('success', 'Updated in general list and future schedule!')
     editingId.value = null
     await loadItems()
   } catch (err: any) {
@@ -556,10 +567,11 @@ const saveEdit = async (itemId: string) => {
 }
 
 const deleteItem = async (item: TodoItem) => {
-  if (!confirm(`Are you sure? This will also delete "${item.item_name}" from all daily records and history.`)) return
+  const confirmMsg = `Delete "${item.item_name}"? This also removes it from today and future dates (History will be kept).`
+  if (!confirm(confirmMsg)) return
   
   try {
-    // 1. Delete from the general configuration list
+    // 1. Delete from General Items
     const { error: itemError } = await supabase
       .from('todo_items')
       .delete()
@@ -567,15 +579,16 @@ const deleteItem = async (item: TodoItem) => {
 
     if (itemError) throw itemError
 
-    // 2. Delete from all daily_todos with the same name
+    // 2. Delete from Daily Todos (Today and Future only)
     const { error: dailyError } = await supabase
       .from('daily_todos')
       .delete()
       .eq('item_name', item.item_name)
+      .gte('todo_date', todayStr.value) // Only Today or Future
 
     if (dailyError) throw dailyError
 
-    showMessage('success', 'Item removed from configuration and history!')
+    showMessage('success', 'Removed from general list and future dates!')
     await loadItems()
   } catch (err: any) {
     showMessage('error', err.message || 'Failed to delete')
