@@ -1,6 +1,20 @@
 const POST_LOGIN_KEY = 'daily-post-login-path'
 
 /**
+ * Narrows a redirect target to a same-site path.
+ *
+ * The destination originates in a `?redirect=` query parameter, so it is
+ * attacker-controllable. A bare `startsWith('/')` is not enough: browsers treat
+ * `//host` and `/\host` as protocol-relative URLs and would happily leave the
+ * site with the user believing they are still signing in.
+ */
+function safeInternalPath(path: string | null | undefined): string {
+  if (!path || !path.startsWith('/')) return '/'
+  if (path.startsWith('//') || path.startsWith('/\\')) return '/'
+  return path
+}
+
+/**
  * Thin wrapper over `@nuxtjs/supabase` auth so pages never talk to the raw
  * client for session concerns.
  */
@@ -66,7 +80,7 @@ export function useAuth() {
     try {
       const path = sessionStorage.getItem(POST_LOGIN_KEY)
       sessionStorage.removeItem(POST_LOGIN_KEY)
-      return path?.startsWith('/') ? path : '/'
+      return safeInternalPath(path)
     } catch {
       return '/'
     }

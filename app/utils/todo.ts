@@ -1,4 +1,7 @@
 import type { DailyTodo, DayProgress } from '~/types'
+// Imported explicitly rather than relying on Nuxt auto-imports, so this module
+// works anywhere — tests, scripts, server routes — not just inside the app.
+import { shiftDateKey, todayKey } from '~/utils/date'
 
 /**
  * `item_key` is the stable link between a routine definition (`todo_items`) and

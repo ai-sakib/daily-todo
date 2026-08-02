@@ -8,6 +8,12 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --project unit",
+    "test:nuxt": "vitest run --project nuxt",
+    "test:coverage": "vitest run --coverage",
+    "verify": "nuxt typecheck && vitest run",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -20,9 +26,14 @@
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "devDependencies": {
+    "@nuxt/test-utils": "^4.1.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@types/canvas-confetti": "^1.9.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.1",
     "typescript": "^5.9",
+    "vitest": "^4.1.10",
     "vue-tsc": "^3.3.9"
   }
 }

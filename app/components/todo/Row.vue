@@ -97,7 +97,7 @@ function commitEdit() {
               ? 'text-slate-400 line-through dark:text-slate-500'
               : 'text-slate-800 dark:text-slate-100'
           "
-          :disabled="!editable"
+          :title="editable ? 'Click to rename' : undefined"
           @click="editable ? startEdit() : emit('toggle', todo)"
         >
           {{ todo.item_name }}
