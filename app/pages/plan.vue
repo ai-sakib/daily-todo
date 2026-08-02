@@ -10,7 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const { confirm } = useConfirm()
 
-const tab = ref<Tab>(route.query.tab === 'schedule' ? 'schedule' : 'routine')
+const tab = ref<Tab>(route.query.tab === 'routine' ? 'routine' : 'schedule')
 watch(tab, value => router.replace({ query: { ...route.query, tab: value } }))
 
 /* ------------------------------------------------------------------ routine */
@@ -37,7 +37,6 @@ async function removeRoutineItem(item: TodoItem) {
 const selectedDate = ref(todayKey())
 const schedule = useDailyBoard(selectedDate)
 const addingToDate = ref(false)
-const scheduleLoaded = ref(false)
 
 const minDate = computed(() => todayKey())
 const canGoBack = computed(() => selectedDate.value > minDate.value)
@@ -66,19 +65,20 @@ async function removeFromDate(todo: DailyTodo) {
   if (ok) await schedule.remove(todo)
 }
 
-// The planner is lazy: it only hits the network once the tab is actually opened.
-watch(
-  tab,
-  async value => {
-    if (value === 'schedule' && !scheduleLoaded.value) {
-      scheduleLoaded.value = true
-      await schedule.load()
-    }
-  },
-  { immediate: true },
-)
+/* -------------------------------------------------------------------- data */
 
-onMounted(routine.load)
+// Each tab fetches on first visit only, so opening Plan costs one query rather
+// than two. Kicked off from onMounted so nothing is fetched during SSR.
+const loaded = reactive<Record<Tab, boolean>>({ routine: false, schedule: false })
+
+async function ensureLoaded(value: Tab) {
+  if (loaded[value]) return
+  loaded[value] = true
+  await (value === 'schedule' ? schedule.load() : routine.load())
+}
+
+watch(tab, ensureLoaded)
+onMounted(() => ensureLoaded(tab.value))
 </script>
 
 <template>
