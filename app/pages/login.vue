@@ -89,7 +89,8 @@ async function handleGoogleLogin() {
       </div>
 
       <p class="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
-        Your data is private to your account.
+        Your data is private to your account. New sign-ups need the owner's approval
+        before the app opens.
       </p>
     </div>
   </div>

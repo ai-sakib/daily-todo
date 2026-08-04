@@ -12,6 +12,44 @@ export type Json = string | number | boolean | null | { [key: string]: Json } | 
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string
+          email: string
+          full_name: string | null
+          avatar_url: string | null
+          status: Database['public']['Enums']['access_status']
+          is_admin: boolean
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+        }
+        // Rows are created by the `on_auth_user_created` trigger, never by the
+        // client — the Insert shape exists only to satisfy the client's generic.
+        Insert: {
+          id: string
+          email: string
+          full_name?: string | null
+          avatar_url?: string | null
+          status?: Database['public']['Enums']['access_status']
+          is_admin?: boolean
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          status?: Database['public']['Enums']['access_status']
+          is_admin?: boolean
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+        }
+        Relationships: []
+      }
       todo_items: {
         Row: {
           id: string
@@ -98,8 +136,13 @@ export interface Database {
       }
     }
     Views: Record<never, never>
-    Functions: Record<never, never>
-    Enums: Record<never, never>
+    Functions: {
+      is_admin: { Args: Record<never, never>; Returns: boolean }
+      is_approved: { Args: Record<never, never>; Returns: boolean }
+    }
+    Enums: {
+      access_status: 'pending' | 'approved' | 'rejected'
+    }
     CompositeTypes: Record<never, never>
   }
 }

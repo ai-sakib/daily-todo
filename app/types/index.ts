@@ -1,6 +1,7 @@
 /**
- * Row shapes for the three Supabase tables backing the app.
+ * Row shapes for the four Supabase tables backing the app.
  *
+ *  profiles              – one row per account, holding its access status.
  *  todo_items            – the reusable "routine" definitions a user maintains.
  *  daily_todos           – one concrete instance of an item on one calendar day.
  *  daily_schedule_status – marks a day as already seeded from the routine, so we
@@ -9,6 +10,27 @@
 
 /** A `YYYY-MM-DD` calendar day in the user's local timezone. */
 export type DateKey = string
+
+/**
+ * Where an account stands with the owner.
+ *
+ * Every Google sign-up starts as `pending` and stays out of the app until an
+ * admin moves it on; `rejected` is a decision that has been made, not a
+ * decision still waiting.
+ */
+export type AccessStatus = 'pending' | 'approved' | 'rejected'
+
+export interface Profile {
+  id: string
+  email: string
+  full_name: string | null
+  avatar_url: string | null
+  status: AccessStatus
+  is_admin: boolean
+  created_at: string
+  decided_at: string | null
+  decided_by: string | null
+}
 
 export interface TodoItem {
   id: string

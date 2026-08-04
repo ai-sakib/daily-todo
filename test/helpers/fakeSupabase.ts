@@ -23,12 +23,22 @@ type Filter = [FilterOp, string, unknown]
 
 /** Unique constraints, so duplicate inserts raise 23505 like Postgres does. */
 const UNIQUE_KEYS: Record<string, string[]> = {
+  profiles: ['id'],
   todo_items: ['user_id', 'item_key'],
   daily_todos: ['user_id', 'todo_date', 'item_key'],
   daily_schedule_status: ['user_id', 'schedule_date'],
 }
 
 const DEFAULTS: Record<string, () => Row> = {
+  profiles: () => ({
+    status: 'pending',
+    is_admin: false,
+    full_name: null,
+    avatar_url: null,
+    created_at: new Date().toISOString(),
+    decided_at: null,
+    decided_by: null,
+  }),
   todo_items: () => ({ is_active: true, display_order: 0, created_at: new Date().toISOString() }),
   daily_todos: () => ({
     is_completed: false,
@@ -64,6 +74,7 @@ function project(row: Row, columns: string): Row {
 export class FakeSupabase {
   /** Table name → rows. Inspect or seed directly in tests. */
   readonly tables: Record<string, Row[]> = {
+    profiles: [],
     todo_items: [],
     daily_todos: [],
     daily_schedule_status: [],
@@ -359,6 +370,22 @@ export function makeDailyTodo(overrides: Row = {}): Row {
     completed_at: null,
     created_at: '2026-08-03T00:00:00.000Z',
     updated_at: '2026-08-03T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+export function makeProfile(overrides: Row = {}): Row {
+  sequence += 1
+  return {
+    id: `user-${sequence}`,
+    email: `person${sequence}@example.com`,
+    full_name: `Person ${sequence}`,
+    avatar_url: null,
+    status: 'pending',
+    is_admin: false,
+    created_at: '2026-08-01T00:00:00.000Z',
+    decided_at: null,
+    decided_by: null,
     ...overrides,
   }
 }

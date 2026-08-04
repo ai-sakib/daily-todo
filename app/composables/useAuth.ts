@@ -88,7 +88,12 @@ export function useAuth() {
 
   async function signOut() {
     const { error } = await supabase.auth.signOut()
-    if (!error) await navigateTo('/login')
+    if (!error) {
+      // Drop the cached access verdict with the session, so the next account to
+      // sign in on this device is judged on its own row.
+      useAccess().clear()
+      await navigateTo('/login')
+    }
     return { error }
   }
 

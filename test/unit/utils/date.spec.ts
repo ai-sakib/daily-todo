@@ -5,6 +5,7 @@ import {
   formatRelativeDay,
   formatShortDate,
   formatTime,
+  formatTimestampDate,
   fromDateKey,
   greetingForNow,
   isFutureDate,
@@ -181,6 +182,23 @@ describe('formatTime', () => {
   it('returns an empty string for null or empty input', () => {
     expect(formatTime(null)).toBe('')
     expect(formatTime('')).toBe('')
+  })
+})
+
+describe('formatTimestampDate', () => {
+  it('renders the local calendar date of an instant', () => {
+    expect(formatTimestampDate('2026-08-04T10:00:00.000Z')).toBe('Aug 4, 2026')
+  })
+
+  it('uses the local day, not the UTC one', () => {
+    // 20:00 UTC is already the 5th in Dhaka (UTC+6).
+    expect(formatTimestampDate('2026-08-04T20:00:00.000Z')).toBe('Aug 5, 2026')
+  })
+
+  it('shows a dash for a missing or unparseable value', () => {
+    expect(formatTimestampDate(null)).toBe('—')
+    expect(formatTimestampDate('')).toBe('—')
+    expect(formatTimestampDate('not a date')).toBe('—')
   })
 })
 

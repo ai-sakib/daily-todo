@@ -75,6 +75,19 @@ export function formatTime(timestamp: string | null): string {
   })
 }
 
+/**
+ * Formats a timestamptz as a calendar date, e.g. `Jan 12, 2026`.
+ *
+ * Unlike the `DateKey` helpers this takes an instant, so it is for audit
+ * columns (`created_at`, `decided_at`) rather than for a user's day.
+ */
+export function formatTimestampDate(timestamp: string | null): string {
+  if (!timestamp) return '—'
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export function greetingForNow(date: Date = new Date()): string {
   const hour = date.getHours()
   if (hour < 5) return 'Still up'

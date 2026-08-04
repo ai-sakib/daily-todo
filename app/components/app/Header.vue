@@ -1,9 +1,18 @@
 <script setup lang="ts">
-const links = [
-  { to: '/', label: 'Today' },
-  { to: '/plan', label: 'Plan' },
-  { to: '/history', label: 'History' },
-] as const
+const { isAdmin } = useAccess()
+const { pendingCount, refreshPendingCount } = useUserAdmin()
+
+// Only admins see the Members tab, and only they pay for the count query.
+onMounted(() => {
+  if (isAdmin.value) refreshPendingCount()
+})
+
+const links = computed(() => [
+  { to: '/', label: 'Today', badge: 0 },
+  { to: '/plan', label: 'Plan', badge: 0 },
+  { to: '/history', label: 'History', badge: 0 },
+  ...(isAdmin.value ? [{ to: '/admin', label: 'Members', badge: pendingCount.value }] : []),
+])
 </script>
 
 <template>
@@ -27,10 +36,17 @@ const links = [
           v-for="link in links"
           :key="link.to"
           :to="link.to"
-          class="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-100"
+          class="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-100"
           active-class="!bg-white !text-brand-700 shadow-soft dark:!bg-white/10 dark:!text-brand-300"
         >
           {{ link.label }}
+          <span
+            v-if="link.badge > 0"
+            class="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-bold text-white"
+            :aria-label="`${link.badge} waiting for approval`"
+          >
+            {{ link.badge }}
+          </span>
         </NuxtLink>
       </nav>
 

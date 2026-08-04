@@ -97,8 +97,8 @@ onMounted(() => ensureLoaded(tab.value))
     >
       <button
         v-for="option in [
-          { value: 'routine' as Tab, label: 'Routine' },
           { value: 'schedule' as Tab, label: 'Specific day' },
+          { value: 'routine' as Tab, label: 'Routine' },
         ]"
         :key="option.value"
         type="button"

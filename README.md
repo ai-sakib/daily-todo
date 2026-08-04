@@ -14,6 +14,7 @@ level security).
 
 - [Getting started](#getting-started)
 - [Scripts](#scripts)
+- [Access control](#access-control)
 - [How the app works](#how-the-app-works)
 - [Data model](#data-model)
 - [Project layout](#project-layout)
@@ -37,7 +38,11 @@ You need a Supabase project with:
 1. **Google enabled** as an auth provider.
 2. `<your-origin>/auth/callback` in the **redirect allow-list** (e.g.
    `http://localhost:3000/auth/callback` and your production origin).
-3. The three tables and their RLS policies — see [`docs/schema.sql`](docs/schema.sql).
+3. The four tables, the sign-up trigger and the RLS policies — see
+   [`docs/schema.sql`](docs/schema.sql). For a database that predates the
+   approval gate, run
+   [`docs/migrations/2026-08-04-access-control.sql`](docs/migrations/2026-08-04-access-control.sql)
+   instead; it adds the gate and grandfathers existing accounts in.
 
 The anon key is safe to expose: every table is protected by row level security,
 so the key alone grants access to nothing.
@@ -59,9 +64,53 @@ so the key alone grants access to nothing.
 
 ---
 
+## Access control
+
+Signing in with Google is not the same as being allowed in. Anyone can create an
+account — Google will happily authenticate any address — so a second, explicit
+decision decides who may actually use the app.
+
+```
+Google sign-in  →  profiles row (pending)  →  admin approves  →  the app
+                          ↓                          ↓
+                      /pending                    /admin
+```
+
+- The `on_auth_user_created` trigger writes a `profiles` row for every new
+  account with `status = 'pending'`. The owner's address (`public.admin_email()`,
+  currently `sakib2439@gmail.com`) is the one exception: it is approved and made
+  admin by the same trigger, so the first sign-in is never locked out.
+- A pending or declined account is held on **`/pending`**, which explains where
+  it stands and offers *Check again* once an approval lands.
+- The owner manages everyone from **`/admin`**: approve, decline, or revoke.
+  The header shows a badge with how many people are waiting.
+
+**The gate is in the database, not the router.** `is_approved()` is part of the
+RLS policy on every table, so a pending account gets nothing back even if it
+talks to PostgREST directly with the anon key. The `/pending` redirect is a
+courtesy for the browser, not the security boundary.
+
+Two deliberate refusals in the policies:
+
+- An admin cannot edit **their own** row (`id <> auth.uid()`), so nobody can
+  revoke or demote the last person able to let others in.
+- `is_admin()` also requires `status = 'approved'`, so a revoked admin loses the
+  members screen along with everything else.
+
+RLS decides which *rows* an admin may write; a column-level grant decides which
+*columns* — only `status`, `decided_at` and `decided_by`. `is_admin` and `email`
+are not writable through the API at all.
+
+Both `is_approved()` and `is_admin()` are `security definer` with a pinned
+`search_path`. They read `profiles`, and a policy *on* `profiles` calls them —
+a plain function would re-enter that policy and recurse.
+
+---
+
 ## How the app works
 
-Three screens, each backed by one composable.
+Three screens, each backed by one composable — plus `/admin` for the owner and
+`/pending` for accounts still waiting, both covered above.
 
 ### Today (`/`)
 
@@ -96,11 +145,12 @@ you got wrong.
 
 ## Data model
 
-Three tables, all owned by the signed-in user (full DDL in
-[`docs/schema.sql`](docs/schema.sql)):
+Four tables. The last three are owned by the signed-in user and readable only
+once that user is approved (full DDL in [`docs/schema.sql`](docs/schema.sql)):
 
 | Table                   | Holds                                                       |
 | ----------------------- | ----------------------------------------------------------- |
+| `profiles`              | One row per account: its access status and admin flag.       |
 | `todo_items`            | The reusable routine: what should appear on a normal day.    |
 | `daily_todos`           | One row per item per calendar day. This is the real record.  |
 | `daily_schedule_status` | A flag marking a day as already seeded from the routine.     |
@@ -139,17 +189,19 @@ app/
 │   ├── app/         Shell: header, nav, toasts, confirm dialog, theme toggle
 │   ├── base/        Presentation primitives (modal, spinner, progress, empty)
 │   ├── history/     History day cards and stat tiles
+│   ├── member/      Member row for the admin screen
 │   ├── routine/     Routine item row
 │   └── todo/        Todo row, quick add, celebration
 ├── composables/     State and orchestration — one per feature
 ├── layouts/         default (signed in) and blank (auth screens)
-├── middleware/      Global auth guard
+├── middleware/      Global auth + approval guard
 ├── pages/           Routes
 ├── services/        Supabase queries. Pure functions, no Nuxt context
 ├── types/           Domain types + the hand-maintained database schema types
 └── utils/           Date and todo helpers (auto-imported)
 
 docs/schema.sql      Reference DDL and RLS policies
+docs/migrations/     Runnable SQL for changing an existing database
 test/                See "Testing"
 ```
 
@@ -181,7 +233,7 @@ the write fails, so ticking a box never waits on the network.
 
 ## Testing
 
-284 tests across two Vitest projects, configured in
+347 tests across two Vitest projects, configured in
 [`vitest.config.ts`](vitest.config.ts).
 
 | Project | Environment | Covers                                    |
