@@ -38,15 +38,11 @@ const selectedDate = ref(todayKey())
 const schedule = useDailyBoard(selectedDate)
 const addingToDate = ref(false)
 
-const minDate = computed(() => todayKey())
-const canGoBack = computed(() => selectedDate.value > minDate.value)
 const relativeLabel = computed(() => formatRelativeDay(selectedDate.value))
 const longLabel = computed(() => formatLongDate(selectedDate.value))
 
 function shift(days: number) {
-  const next = shiftDateKey(selectedDate.value, days)
-  if (next < minDate.value) return
-  selectedDate.value = next
+  selectedDate.value = shiftDateKey(selectedDate.value, days)
 }
 
 async function addToDate(name: string) {
@@ -202,7 +198,6 @@ onMounted(() => ensureLoaded(tab.value))
           <button
             type="button"
             class="btn btn-secondary px-3"
-            :disabled="!canGoBack"
             aria-label="Previous day"
             @click="shift(-1)"
           >
@@ -213,7 +208,6 @@ onMounted(() => ensureLoaded(tab.value))
             v-model="selectedDate"
             type="date"
             class="input flex-1"
-            :min="minDate"
           >
           <button type="button" class="btn btn-secondary px-3" aria-label="Next day" @click="shift(1)">
             ›
@@ -237,8 +231,10 @@ onMounted(() => ensureLoaded(tab.value))
         </div>
 
         <p class="card-muted mt-4 p-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-          Changes here affect this day only. The first time you open a future day it is filled from
-          your active routine; after that it is yours to shape, and removed items stay removed.
+          Changes here affect this day only. The first time you open today or a future day it is
+          filled from your active routine; after that it is yours to shape, and removed items stay
+          removed. Past days are left exactly as you lived them — add items yourself, or pull in your
+          routine, to fill in anything you missed.
         </p>
       </section>
 
